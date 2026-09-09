@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OPERACIONAL
+  LEITURA
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum StockLotStatus {
+  ACTIVE
+  DEPLETED
+  BLOCKED
+}
+
+enum EmailJobType {
+  STOCK_ENTRY_FINANCE
+  SALE_ROMANEIO
+}
+
+enum EmailJobStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id             String    @id @default(uuid())
+  name           String
+  email          String    @unique
+  passwordHash   String    @map("password_hash")
+  role           UserRole
+  status         UserStatus @default(ACTIVE)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  lastLoginAt    DateTime? @map("last_login_at")
+
+  sessions       Session[]
+  stockEntries   StockEntry[] @relation("StockEntryCreatedBy")
+  sales          Sale[]       @relation("SaleCreatedBy")
+  quotes         Quote[]      @relation("QuoteCreatedBy")
+  auditLogs      AuditLog[]   @relation("AuditActor")
+  emailJobs      EmailJob[]   @relation("EmailJobCreatedBy")
+
+  @@map("users")
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @unique @map("token_hash")
+  ip         String?
+  userAgent  String?   @map("user_agent")
+  expiresAt  DateTime  @map("expires_at")
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Material {
+  id        String   @id @default(uuid())
+  name      String
+  sku       String   @unique
+  unit      String
+  type      String?
+  group     String?
+  markup    Decimal  @default(30) @db.Decimal(6, 2)
+  minStock  Decimal  @default(0) @map("min_stock") @db.Decimal(14, 3)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stockEntryItems StockEntryItem[]
+  stockLots       StockLot[]
+  saleItems       SaleItem[]
+  quotes          Quote[]
+
+  @@index([active])
+  @@map("materials")
+}
+
+model Supplier {
+  id            String   @id @default(uuid())
+  name          String
+  cnpj          String?  @unique
+  email         String?
+  phone         String?
+  contactPerson String?  @map("contact_person")
+  active        Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stockEntries StockEntry[]
+  stockLots    StockLot[]
+  quoteItems   QuoteItem[]
+
+  @@index([active])
+  @@map("suppliers")
+}
+
+model Client {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String?  @unique
+  email     String?
+  address   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sales Sale[]
+
+  @@index([active])
+  @@map("clients")
+}
+
+model StockEntry {
+  id            String   @id @default(uuid())
+  supplierId    String   @map("supplier_id")
+  invoiceNumber String   @map("invoice_number")
+  entryDate     DateTime @map("entry_date")
+  totalValue    Decimal  @map("total_value") @db.Decimal(14, 2)
+  createdById   String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  supplier Supplier         @relation(fields: [supplierId], references: [id])
+  createdBy User            @relation("StockEntryCreatedBy", fields: [createdById], references: [id])
+  items     StockEntryItem[]
+
+  @@index([entryDate])
+  @@index([supplierId])
+  @@map("stock_entries")
+}
+
+model StockEntryItem {
+  id          String   @id @default(uuid())
+  entryId     String   @map("entry_id")
+  materialId  String   @map("material_id")
+  lotNumber   String   @map("lot_number")
+  expiresAt   DateTime @map("expires_at")
+  quantity    Decimal  @db.Decimal(14, 3)
+  unitCost    Decimal  @map("unit_cost") @db.Decimal(14, 4)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  entry    StockEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  material Material   @relation(fields: [materialId], references: [id])
+  lot      StockLot?
+
+  @@index([materialId])
+  @@map("stock_entry_items")
+}
+
+model StockLot {
+  id                  String         @id @default(uuid())
+  materialId          String         @map("material_id")
+  supplierId          String         @map("supplier_id")
+  lotNumber           String         @map("lot_number")
+  expiresAt           DateTime       @map("expires_at")
+  initialQuantity     Decimal        @map("initial_quantity") @db.Decimal(14, 3)
+  currentQuantity     Decimal        @map("current_quantity") @db.Decimal(14, 3)
+  unitCost            Decimal        @map("unit_cost") @db.Decimal(14, 4)
+  sourceEntryItemId   String         @unique @map("source_entry_item_id")
+  status              StockLotStatus @default(ACTIVE)
+  version             Int            @default(0)
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  material         Material       @relation(fields: [materialId], references: [id])
+  supplier         Supplier       @relation(fields: [supplierId], references: [id])
+  sourceEntryItem  StockEntryItem @relation(fields: [sourceEntryItemId], references: [id])
+  consumptions     SaleItemLotConsumption[]
+
+  // FEFO: buscas ordenam por (materialId, status=ACTIVE, expiresAt asc)
+  @@index([materialId, status, expiresAt])
+  @@map("stock_lots")
+}
+
+model Sale {
+  id             String    @id @default(uuid())
+  docNumber      String    @unique @map("doc_number")
+  clientId       String    @map("client_id")
+  saleDate       DateTime  @map("sale_date")
+  total          Decimal   @db.Decimal(14, 2)
+  createdById    String    @map("created_by")
+  recipientEmail String?   @map("recipient_email")
+  emailStatus    EmailJobStatus @default(PENDING) @map("email_status")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  client    Client     @relation(fields: [clientId], references: [id])
+  createdBy User       @relation("SaleCreatedBy", fields: [createdById], references: [id])
+  items     SaleItem[]
+
+  @@index([saleDate])
+  @@index([clientId])
+  @@map("sales")
+}
+
+model SaleItem {
+  id         String  @id @default(uuid())
+  saleId     String  @map("sale_id")
+  materialId String  @map("material_id")
+  quantity   Decimal @db.Decimal(14, 3)
+  unitPrice  Decimal @map("unit_price") @db.Decimal(14, 4)
+  subtotal   Decimal @db.Decimal(14, 2)
+
+  sale         Sale                     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  material     Material                 @relation(fields: [materialId], references: [id])
+  consumptions SaleItemLotConsumption[]
+
+  @@index([materialId])
+  @@map("sale_items")
+}
+
+model SaleItemLotConsumption {
+  id                String  @id @default(uuid())
+  saleItemId        String  @map("sale_item_id")
+  stockLotId        String  @map("stock_lot_id")
+  quantity          Decimal @db.Decimal(14, 3)
+  unitCostSnapshot  Decimal @map("unit_cost_snapshot") @db.Decimal(14, 4)
+
+  saleItem SaleItem @relation(fields: [saleItemId], references: [id], onDelete: Cascade)
+  stockLot StockLot @relation(fields: [stockLotId], references: [id])
+
+  @@index([stockLotId])
+  @@map("sale_item_lot_consumptions")
+}
+
+model Quote {
+  id          String   @id @default(uuid())
+  materialId  String   @map("material_id")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  quoteDate   DateTime @map("quote_date")
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  material  Material    @relation(fields: [materialId], references: [id])
+  createdBy User        @relation("QuoteCreatedBy", fields: [createdById], references: [id])
+  items     QuoteItem[]
+
+  @@index([materialId, quoteDate])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id         String  @id @default(uuid())
+  quoteId    String  @map("quote_id")
+  supplierId String  @map("supplier_id")
+  price      Decimal @db.Decimal(14, 4)
+  notes      String?
+
+  quote    Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+
+  @@unique([quoteId, supplierId])
+  @@map("quote_items")
+}
+
+model EmailJob {
+  id            String         @id @default(uuid())
+  type          EmailJobType
+  entityType    String         @map("entity_type")
+  entityId      String         @map("entity_id")
+  recipient     String
+  subject       String
+  status        EmailJobStatus @default(PENDING)
+  attempts      Int            @default(0)
+  lastErrorSafe String?        @map("last_error_safe")
+  sentAt        DateTime?      @map("sent_at")
+  createdById   String         @map("created_by")
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  createdBy User @relation("EmailJobCreatedBy", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@index([entityType, entityId])
+  @@map("email_jobs")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorUserId  String?  @map("actor_user_id")
+  action       String
+  entityType   String   @map("entity_type")
+  entityId     String?  @map("entity_id")
+  ip           String?
+  userAgent    String?  @map("user_agent")
+  beforeJson   Json?    @map("before_json")
+  afterJson    Json?    @map("after_json")
+  metadataJson Json?    @map("metadata_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([actorUserId])
+  @@map("audit_logs")
+}

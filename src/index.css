@@ -1,0 +1,73 @@
+/* Diretivas do Tailwind — precisam vir antes de qualquer CSS customizado */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Estilos customizados do sistema.
+  Este bloco é exatamente o que estava dentro da tag <style> inline
+  do componente App original — só foi movido para um arquivo .css
+  de verdade, nada na definição das regras foi alterado.
+*/
+
+:root {
+  --bg: #F5F7F7;
+  --panel: #FFFFFF;
+  --primary: #116149;
+  --primary-dark: #034b36;
+  --primary-neon: #12704b;
+  --primary-deep: #062e22;
+  --accent: #D98E2B;
+  --text: #1C2A2A;
+  --muted: #667070;
+  --border: #E1E7E6;
+  --danger: #C0392B;
+  --mono: ui-monospace, 'Courier New', monospace;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.mono { font-family: var(--mono); }
+
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-outline { border: 1px solid var(--border); background: white; color: var(--text); }
+.btn-outline:hover { background: #F0F3F2; }
+
+input, select, textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(17, 97, 73, 0.12);
+}
+
+th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+td, th { padding: 10px 12px; }
+tr + tr td { border-top: 1px solid var(--border); }
+
+/* Regras usadas na impressão de romaneios e relatórios (ver RomaneioView e RelatorioEstoqueModal) */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; top: 0; left: 0; width: 100%; padding: 24px; }
+  .no-print { display: none !important; }
+}
