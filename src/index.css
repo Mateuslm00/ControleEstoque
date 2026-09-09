@@ -22,7 +22,7 @@
   --muted: #667070;
   --border: #E1E7E6;
   --danger: #C0392B;
-  --mono: ui-monospace, 'Courier New', monospace;
+  --mono: Arial, Helvetica, sans-serif;
 }
 
 body {

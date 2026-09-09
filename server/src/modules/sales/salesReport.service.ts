@@ -43,7 +43,7 @@ export async function buildSalesReportXlsx(
   const { canSeeTotals, canSeeCost, periodoStr } = opts;
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "Estoque Pimentel";
+  workbook.creator = "Controle de Estoque";
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet("Saídas", {
@@ -87,7 +87,7 @@ export async function buildSalesReportXlsx(
   // ---------- Cabeçalho do relatório (título + período + gerado em) ----------
   sheet.mergeCells(1, 1, 1, lastCol);
   const titleCell = sheet.getCell(1, 1);
-  titleCell.value = "Relatório de Saídas — Estoque Pimentel";
+  titleCell.value = "Relatório de Saídas — Controle de Estoque";
   titleCell.font = { bold: true, size: 15, color: { argb: "FF0F5B52" } };
   sheet.getRow(1).height = 26;
 

@@ -12,6 +12,7 @@ declare module "fastify" {
       role: UserRole;
       name: string;
       email: string;
+      mustChangePassword: boolean;
     };
   }
 }
@@ -31,6 +32,7 @@ export const authPlugin: FastifyPluginAsync = fp(async (app) => {
       role: session.user.role,
       name: session.user.name,
       email: session.user.email,
+      mustChangePassword: session.user.mustChangePassword,
     };
   });
 }) as FastifyPluginAsync;

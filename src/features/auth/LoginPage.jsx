@@ -20,10 +20,10 @@ import "./LoginPage.css";
  * não autenticados (ver PROMPT_CLAUDE_CODE_BACKEND_SEGURANCA.md, seção
  * "Reforço: tela de login, criação de usuários e permissões").
  *
- * Layout e classes CSS replicam 1:1 o protótipo estático de referência em
- * `pimentel-login-compact-original/` (mesma estrutura, mesmo styles.css
- * adaptado para módulo React). A diferença é que aqui os campos são
- * controlados de verdade e o formulário chama o backend.
+ * Layout e classes CSS replicam 1:1 o protótipo estático de referência
+ * usado no desenho da tela (já incorporado aqui, não existe mais como
+ * arquivo separado). A diferença é que aqui os campos são controlados de
+ * verdade e o formulário chama o backend.
  *
  * O QUE ESTE COMPONENTE NÃO FAZ (de propósito):
  *  - Não guarda token/sessão em localStorage — a sessão vive só no cookie
@@ -71,14 +71,14 @@ export default function LoginPage({ onSubmit }) {
   };
 
   return (
-    <div id="pimentel-login-compact">
+    <div id="controle-estoque-login">
       <section className="shell" aria-label="Tela de login">
         {/* ===== Coluna esquerda: painel de marca (fundo verde) ===== */}
         <aside className="brand">
           {/* Nome do sistema e subtítulo */}
           <div className="brand-top">
             <div>
-              <p className="brand-title">Pimentel Estoque</p>
+              <p className="brand-title">Controle de Estoque</p>
               <p className="brand-subtitle">Controle interno</p>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function LoginPage({ onSubmit }) {
           {/* Aviso padrão de acesso restrito */}
           <div className="notice">
             <TriangleAlert aria-hidden="true" />
-            <span>Acesso restrito ao sistema de Estoque Pimentel.</span>
+            <span>Acesso restrito ao sistema de Controle de Estoque.</span>
           </div>
         </main>
       </section>

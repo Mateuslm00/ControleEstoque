@@ -101,7 +101,7 @@ export async function buildApp() {
   });
 
   await app.register(csrfProtection, {
-    cookieOpts: { signed: false, path: "/", httpOnly: true, sameSite: "strict", secure: env.COOKIE_SECURE },
+    cookieOpts: { signed: false, path: "/", httpOnly: true, sameSite: env.COOKIE_SAMESITE, secure: env.COOKIE_SECURE },
     getToken: (request) => request.headers["x-csrf-token"] as string | undefined,
   });
 
@@ -121,6 +121,27 @@ export async function buildApp() {
 
   app.get("/auth/csrf-token", async (request, reply) => {
     return reply.send({ csrfToken: await reply.generateCsrf() });
+  });
+
+  // Enquanto mustChangePassword estiver true (senha de bootstrap/reset por
+  // ADMIN ainda nao trocada), bloqueia qualquer rota que nao seja a de
+  // trocar senha, sair ou ver o proprio perfil — nao basta so a tela
+  // "sugerir" a troca, senao um usuario poderia so ignorar o aviso.
+  const MUST_CHANGE_PASSWORD_ALLOWLIST = new Set([
+    "/auth/login",
+    "/auth/logout",
+    "/auth/me",
+    "/auth/change-password",
+    "/auth/csrf-token",
+    "/health",
+  ]);
+  app.addHook("preHandler", async (request, reply) => {
+    if (!request.currentUser?.mustChangePassword) return;
+    const path = request.url.split("?")[0] ?? request.url;
+    if (MUST_CHANGE_PASSWORD_ALLOWLIST.has(path)) return;
+    return reply.code(403).send({
+      error: { code: "MUST_CHANGE_PASSWORD", message: "E necessario trocar a senha antes de continuar" },
+    });
   });
 
   await app.register(authRoutes);

@@ -18,13 +18,13 @@ import { X } from "lucide-react";
  * ação é destrutiva (ex: excluir) é o componente que usa o Modal.
  * -----------------------------------------------------------------------
  */
-export default function Modal({ title, onClose, children, wide, noPad }) {
+export default function Modal({ title, onClose, children, wide, noPad, noClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 no-print" style={{ background: "rgba(20,30,29,0.45)" }}>
       <div className="card w-full max-h-[90vh] overflow-y-auto" style={{ maxWidth: wide ? 760 : 480, padding: noPad ? 0 : 24 }}>
         <div className="flex items-center justify-between mb-4 no-print" style={{ padding: noPad ? "20px 20px 0 20px" : 0 }}>
           <h3 className="font-bold text-lg">{title}</h3>
-          <button onClick={onClose} className="p-1 rounded hover:bg-black/5"><X size={18} /></button>
+          {!noClose && <button onClick={onClose} className="p-1 rounded hover:bg-black/5"><X size={18} /></button>}
         </div>
         {children}
       </div>

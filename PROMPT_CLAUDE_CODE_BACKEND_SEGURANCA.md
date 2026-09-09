@@ -1,4 +1,4 @@
-# Prompt para Claude Code - Backend, Banco e Seguranca do Sistema de Estoque Pimentel
+# Prompt para Claude Code - Backend, Banco e Seguranca do Sistema de Controle de Estoque
 
 Voce e o Claude Code trabalhando no projeto `estoque-app-organizado`, um sistema React/Vite/Tailwind de controle de estoque, cotacao de precos, saida de materiais/vendas e romaneio. Leia o codigo existente antes de alterar qualquer arquivo, principalmente `src/App.jsx`, `src/data/constants.js`, `src/features/cotacao/CotacaoTab.jsx`, `src/features/saida/SaidaTab.jsx`, `src/features/saida/romaneioHtml.js` e demais componentes usados por entrada, saida, materiais, fornecedores, unidades/clientes e dashboard.
 

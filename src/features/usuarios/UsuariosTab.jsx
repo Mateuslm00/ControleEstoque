@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, Edit3, Ban, CheckCircle2 } from "lucide-react";
+import { UserPlus, Edit3, Ban, CheckCircle2, KeyRound } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import Modal from "../../components/common/Modal.jsx";
 import Field from "../../components/common/Field.jsx";
@@ -72,6 +72,14 @@ export default function UsuariosTab() {
     reload();
   };
 
+  const [resetResult, setResetResult] = useState(null); // { name, temporaryPassword } | null
+
+  const resetPassword = async (u) => {
+    if (!window.confirm(`Gerar uma senha temporária para ${u.name}? A senha atual dessa conta deixará de funcionar.`)) return;
+    const { temporaryPassword } = await apiFetch(`/users/${u.id}/reset-password`, { method: "POST" });
+    setResetResult({ name: u.name, temporaryPassword });
+  };
+
   return (
     <div>
       <PageHeader
@@ -100,7 +108,8 @@ export default function UsuariosTab() {
                     </td>
                     <td className="text-sm">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString("pt-BR") : "Nunca"}</td>
                     <td className="text-right">
-                      <button onClick={() => openEdit(u)} className="p-1.5 rounded hover:bg-black/5 mr-1"><Edit3 size={14} /></button>
+                      <button onClick={() => openEdit(u)} className="p-1.5 rounded hover:bg-black/5 mr-1" title="Editar"><Edit3 size={14} /></button>
+                      <button onClick={() => resetPassword(u)} className="p-1.5 rounded hover:bg-black/5 mr-1" title="Resetar senha"><KeyRound size={14} /></button>
                       <button
                         onClick={() => toggleStatus(u)}
                         className="p-1.5 rounded hover:bg-black/5"
@@ -139,6 +148,21 @@ export default function UsuariosTab() {
           </Field>
           <button onClick={save} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-2">
             {saving ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar usuário"}
+          </button>
+        </Modal>
+      )}
+
+      {resetResult && (
+        <Modal title="Senha temporária gerada" onClose={() => setResetResult(null)}>
+          <p className="text-sm mb-3">
+            Repasse esta senha para <strong>{resetResult.name}</strong> por um canal seguro. Ela só aparece
+            agora — não fica salva em nenhum lugar do sistema — e será obrigatório trocá-la no próximo login.
+          </p>
+          <div className="card p-3 mono text-sm font-semibold text-center mb-3" style={{ background: "#FAFBFB", wordBreak: "break-all" }}>
+            {resetResult.temporaryPassword}
+          </div>
+          <button onClick={() => setResetResult(null)} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full">
+            Fechar
           </button>
         </Modal>
       )}

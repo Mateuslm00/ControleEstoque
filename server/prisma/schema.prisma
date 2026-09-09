@@ -42,6 +42,9 @@ model User {
   passwordHash   String    @map("password_hash")
   role           UserRole
   status         UserStatus @default(ACTIVE)
+  // true logo apos bootstrap (seed) ou apos reset de senha pelo admin —
+  // obriga o usuario a definir uma senha propria antes de usar o sistema.
+  mustChangePassword Boolean @default(false) @map("must_change_password")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   lastLoginAt    DateTime? @map("last_login_at")

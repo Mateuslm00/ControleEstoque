@@ -80,7 +80,7 @@ export const sessionCookieOptions = {
   name: SESSION_COOKIE_NAME,
   httpOnly: true,
   secure: env.COOKIE_SECURE,
-  sameSite: "strict" as const,
+  sameSite: env.COOKIE_SAMESITE,
   path: "/",
   domain: env.COOKIE_DOMAIN === "localhost" ? undefined : env.COOKIE_DOMAIN,
 };

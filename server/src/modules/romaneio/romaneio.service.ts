@@ -56,7 +56,7 @@ export async function renderRomaneioHtml(saleId: string): Promise<string> {
 </style></head>
 <body>
   <h1>Romaneio de Venda Nº ${escapeHtml(sale.docNumber)}</h1>
-  <div class="sub">Estoque Pimentel — Emitido em ${dataEmissao}</div>
+  <div class="sub">Controle de Estoque — Emitido em ${dataEmissao}</div>
   <div class="box">
     <b>Cliente / Unidade:</b> ${escapeHtml(sale.client.name)}<br/>
     <b>CNPJ:</b> ${escapeHtml(sale.client.cnpj ?? "não informado")}

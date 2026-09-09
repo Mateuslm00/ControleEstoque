@@ -10,6 +10,7 @@ import CotacaoTab from "./features/cotacao/CotacaoTab.jsx";
 import SaidaTab from "./features/saida/SaidaTab.jsx";
 import UnidadesTab from "./features/unidades/UnidadesTab.jsx";
 import UsuariosTab from "./features/usuarios/UsuariosTab.jsx";
+import ChangePasswordModal from "./features/auth/ChangePasswordModal.jsx";
 import { authApi } from "./lib/api.js";
 import { NAV } from "./data/constants.js";
 
@@ -76,6 +77,21 @@ export default function App() {
   // Sem sessão válida: tela de login é a única coisa visível (rota pública).
   if (!currentUser) {
     return <LoginPage onSubmit={handleLogin} />;
+  }
+
+  // Senha de bootstrap (admin recém-criado) ou reset feito por outro admin:
+  // o backend já bloqueia qualquer outra rota nesse estado (ver app.ts),
+  // então aqui só forçamos a mesma coisa visualmente, sem dar acesso ao
+  // resto do sistema por trás do modal.
+  if (currentUser.mustChangePassword) {
+    return (
+      <div className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)]">
+        <ChangePasswordModal
+          forced
+          onDone={() => setCurrentUser({ ...currentUser, mustChangePassword: false })}
+        />
+      </div>
+    );
   }
 
   // Defesa em profundidade: se a aba ativa não é permitida para o perfil

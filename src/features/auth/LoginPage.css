@@ -1,11 +1,11 @@
 /* ============================================================
    ESCOPO E VARIÁVEIS DE COR
-   Tudo prefixado com #pimentel-login-compact para não vazar
+   Tudo prefixado com #controle-estoque-login para não vazar
    estilo pra fora do componente (mesmo esquema do protótipo
-   original em pimentel-login-compact-original/).
+   original em controle-estoque-login-original/).
    light-dark(claro, escuro) troca sozinho com o tema do sistema.
 ============================================================ */
-#pimentel-login-compact {
+#controle-estoque-login {
   --login-bg: light-dark(#edf3f0, #101716);
   --login-panel: light-dark(#ffffff, #18201e);
   --login-soft: light-dark(#f5f8f6, #202926);
@@ -25,7 +25,7 @@
 }
 
 /* Box-sizing consistente em todos os elementos do componente */
-#pimentel-login-compact * {
+#controle-estoque-login * {
   box-sizing: border-box;
 }
 
@@ -33,7 +33,7 @@
    CARTÃO PRINCIPAL (.shell)
    Grid de 2 colunas: painel de marca (300px) + formulário (resto)
 ============================================================ */
-#pimentel-login-compact .shell {
+#controle-estoque-login .shell {
   width: min(100%, 760px);
   min-height: 430px;
   display: grid;
@@ -48,7 +48,7 @@
 /* ============================================================
    COLUNA ESQUERDA — PAINEL DE MARCA (.brand)
 ============================================================ */
-#pimentel-login-compact .brand {
+#controle-estoque-login .brand {
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -58,26 +58,26 @@
   color: #f2fbf7;
 }
 
-#pimentel-login-compact .brand-top {
+#controle-estoque-login .brand-top {
   display: flex;
   align-items: center;
   gap: 11px;
 }
 
-#pimentel-login-compact .brand-title {
+#controle-estoque-login .brand-title {
   margin: 0;
   font-size: 17px;
   font-weight: 500;
   letter-spacing: 0;
 }
 
-#pimentel-login-compact .brand-subtitle {
+#controle-estoque-login .brand-subtitle {
   margin: 1px 0 0;
   color: rgba(242, 251, 247, .72);
   font-size: 12px;
 }
 
-#pimentel-login-compact .brand h2 {
+#controle-estoque-login .brand h2 {
   margin: 0 0 11px;
   font-size: 24px;
   line-height: 1.16;
@@ -85,7 +85,7 @@
   letter-spacing: 0;
 }
 
-#pimentel-login-compact .brand p {
+#controle-estoque-login .brand p {
   margin: 0;
   color: rgba(242, 251, 247, .76);
   font-size: 13px;
@@ -93,7 +93,7 @@
 }
 
 /* Lista de benefícios ("cookie seguro", "admin separado"...) */
-#pimentel-login-compact .badges {
+#controle-estoque-login .badges {
   display: grid;
   gap: 8px;
   margin: 0;
@@ -101,7 +101,7 @@
   list-style: none;
 }
 
-#pimentel-login-compact .badges li {
+#controle-estoque-login .badges li {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -112,14 +112,14 @@
 /* ============================================================
    COLUNA DIREITA — FORMULÁRIO (.form-side)
 ============================================================ */
-#pimentel-login-compact .form-side {
+#controle-estoque-login .form-side {
   padding: 30px;
   display: grid;
   align-content: center;
 }
 
 /* Selo "Acesso restrito" no topo do formulário */
-#pimentel-login-compact .access {
+#controle-estoque-login .access {
   display: inline-flex;
   width: fit-content;
   align-items: center;
@@ -133,7 +133,7 @@
   margin-bottom: 14px;
 }
 
-#pimentel-login-compact h1 {
+#controle-estoque-login h1 {
   margin: 0;
   font-size: 24px;
   line-height: 1.15;
@@ -141,7 +141,7 @@
   letter-spacing: 0;
 }
 
-#pimentel-login-compact .copy {
+#controle-estoque-login .copy {
   margin: 8px 0 20px;
   color: var(--login-muted);
   font-size: 13px;
@@ -151,23 +151,23 @@
 /* ============================================================
    FORMULÁRIO — campos, linha de opções e botão
 ============================================================ */
-#pimentel-login-compact form {
+#controle-estoque-login form {
   display: grid;
   gap: 13px;
 }
 
-#pimentel-login-compact .field {
+#controle-estoque-login .field {
   display: grid;
   gap: 6px;
 }
 
-#pimentel-login-compact label {
+#controle-estoque-login label {
   font-size: 12px;
   font-weight: 500;
 }
 
 /* Caixa que envolve ícone + input de cada campo */
-#pimentel-login-compact .input {
+#controle-estoque-login .input {
   min-height: 42px;
   display: flex;
   align-items: center;
@@ -179,28 +179,28 @@
 }
 
 /* Destaque verde quando o campo está em foco */
-#pimentel-login-compact .input:focus-within {
+#controle-estoque-login .input:focus-within {
   border-color: var(--login-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--login-accent) 16%, transparent);
 }
 
 /* Campo com erro de validação (usado quando o backend recusa o login) */
-#pimentel-login-compact .input.has-error {
+#controle-estoque-login .input.has-error {
   border-color: #c0392b;
 }
 
 /* Tamanho/cor padrão de todos os ícones lucide usados no cartão */
-#pimentel-login-compact .input svg,
-#pimentel-login-compact .access svg,
-#pimentel-login-compact .notice svg,
-#pimentel-login-compact .submit svg {
+#controle-estoque-login .input svg,
+#controle-estoque-login .access svg,
+#controle-estoque-login .notice svg,
+#controle-estoque-login .submit svg {
   width: 15px;
   height: 15px;
   flex: 0 0 auto;
   color: var(--login-muted);
 }
 
-#pimentel-login-compact input {
+#controle-estoque-login input {
   width: 100%;
   min-width: 0;
   border: 0;
@@ -212,7 +212,7 @@
 }
 
 /* Botão de mostrar/ocultar senha, dentro do campo de senha */
-#pimentel-login-compact .toggle-password {
+#controle-estoque-login .toggle-password {
   flex: 0 0 auto;
   display: inline-flex;
   border: 0;
@@ -223,7 +223,7 @@
 }
 
 /* Linha "Manter sessao" + link "Esqueci minha senha" */
-#pimentel-login-compact .row {
+#controle-estoque-login .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -233,26 +233,26 @@
   font-size: 12px;
 }
 
-#pimentel-login-compact .check {
+#controle-estoque-login .check {
   display: inline-flex;
   align-items: center;
   gap: 7px;
 }
 
-#pimentel-login-compact .check input {
+#controle-estoque-login .check input {
   width: 15px;
   height: 15px;
   accent-color: var(--login-accent);
 }
 
-#pimentel-login-compact a {
+#controle-estoque-login a {
   color: var(--login-accent);
   text-decoration: none;
   font-weight: 500;
 }
 
 /* Botão principal de envio */
-#pimentel-login-compact .submit {
+#controle-estoque-login .submit {
   min-height: 44px;
   border: 0;
   border-radius: 8px;
@@ -268,17 +268,17 @@
   cursor: pointer;
 }
 
-#pimentel-login-compact .submit:disabled {
+#controle-estoque-login .submit:disabled {
   opacity: .65;
   cursor: not-allowed;
 }
 
-#pimentel-login-compact .submit svg {
+#controle-estoque-login .submit svg {
   color: currentColor;
 }
 
 /* Aviso amarelo no rodapé do formulário */
-#pimentel-login-compact .notice {
+#controle-estoque-login .notice {
   margin-top: 14px;
   padding: 10px;
   display: flex;
@@ -293,7 +293,7 @@
 }
 
 /* Aviso vermelho de erro de autenticacao (mensagem generica, sem detalhes) */
-#pimentel-login-compact .notice.error {
+#controle-estoque-login .notice.error {
   background: color-mix(in srgb, #c0392b 12%, var(--login-panel));
   border-color: color-mix(in srgb, #c0392b 35%, var(--login-line));
   color: light-dark(#8f2c22, #f2a89e);
@@ -303,20 +303,20 @@
    RESPONSIVO — telas até 700px (celular)
 ============================================================ */
 @media (max-width: 700px) {
-  #pimentel-login-compact .shell {
+  #controle-estoque-login .shell {
     width: min(100%, 430px);
     grid-template-columns: 1fr; /* colunas empilham em vez de lado a lado */
   }
-  #pimentel-login-compact .brand {
+  #controle-estoque-login .brand {
     padding: 22px;
   }
-  #pimentel-login-compact .brand h2 {
+  #controle-estoque-login .brand h2 {
     font-size: 21px;
   }
-  #pimentel-login-compact .badges {
+  #controle-estoque-login .badges {
     display: none; /* esconde a lista de benefícios pra economizar espaço */
   }
-  #pimentel-login-compact .form-side {
+  #controle-estoque-login .form-side {
     padding: 24px;
   }
 }

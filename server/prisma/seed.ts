@@ -33,7 +33,7 @@ async function main() {
   const passwordHash = await argon2.hash(initialPassword, { type: argon2.argon2id });
 
   const admin = await prisma.user.create({
-    data: { name, email, passwordHash, role: "ADMIN", status: "ACTIVE" },
+    data: { name, email, passwordHash, role: "ADMIN", status: "ACTIVE", mustChangePassword: true },
   });
 
   console.log("=================================================");

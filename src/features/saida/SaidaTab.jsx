@@ -207,11 +207,11 @@ export default function SaidaTab() {
           <button
             onClick={downloadReport}
             disabled={reportLoading}
-            className="btn-outline rounded-lg px-3 py-2 text-sm font-semibold flex items-center gap-2 disabled:opacity-40"
+            className="btn-outline rounded-lg px-3 py-2 text-sm font-semibold flex items-center gap-2 disabled:opacity-40 mb-3"
           >
             <Download size={14} />{reportLoading ? "Gerando..." : "Baixar relatório do período"}
           </button>
-          <span className="text-xs ml-auto" style={{ color: "var(--muted)" }}>
+          <span className="text-xs ml-auto mb-3" style={{ color: "var(--muted)" }}>
             {salesTotal} {salesTotal === 1 ? "saída encontrada" : "saídas encontradas"}
           </span>
         </div>

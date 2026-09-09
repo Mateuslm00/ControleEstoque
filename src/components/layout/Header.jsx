@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { LogOut, User, Users } from "lucide-react";
+import { LogOut, User, Users, KeyRound } from "lucide-react";
 import { NAV } from "../../data/constants.js";
+import ChangePasswordModal from "../../features/auth/ChangePasswordModal.jsx";
 
 /**
  * Header
@@ -25,6 +26,7 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
   const visibleItems = NAV.filter((n) => n.key !== "usuarios" && (!n.roles || n.roles.includes(role)));
   const isAdmin = role === "ADMIN";
   const [profileOpen, setProfileOpen] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   return (
     <>
@@ -76,6 +78,17 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
                     <button
                       onClick={() => {
                         setProfileOpen(false);
+                        setChangingPassword(true);
+                      }}
+                      className="w-full flex items-center gap-2 text-sm py-1.5 hover:text-white transition-colors"
+                      style={{ color: "#BFD8D3" }}
+                    >
+                      <KeyRound size={14} />
+                      Trocar senha
+                    </button>
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
                         onLogout();
                       }}
                       className="w-full flex items-center gap-2 text-sm py-1.5 hover:text-white transition-colors"
@@ -91,6 +104,10 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
           )}
         </div>
       </header>
+
+      {changingPassword && (
+        <ChangePasswordModal onClose={() => setChangingPassword(false)} onDone={() => setChangingPassword(false)} />
+      )}
 
       <nav
         className="fixed top-16 left-0 w-64 z-30 flex flex-col px-3 py-4 no-print"

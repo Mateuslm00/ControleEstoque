@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
+import { randomBytes } from "node:crypto";
 import { prisma } from "../../db/prisma.js";
 import { hashPassword } from "../../shared/security/password.js";
 import { revokeAllUserSessions } from "../../shared/security/session.js";
@@ -90,7 +91,9 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, role },
+      // mustChangePassword: quem criou o usuario (ADMIN) definiu a senha,
+      // entao o dono da conta deve trocar por uma so dele no primeiro acesso.
+      data: { name, email, passwordHash, role, mustChangePassword: true },
     });
 
     await recordAudit(
@@ -164,4 +167,37 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send({ user: toPublicUser(user) });
   });
+
+  // Reset de senha de OUTRO usuario, feito pelo ADMIN (ex.: usuario esqueceu
+  // a senha). Gera uma senha temporaria aleatoria, forca troca no proximo
+  // login e derruba todas as sessoes ativas dessa conta.
+  app.post(
+    "/users/:id/reset-password",
+    { preHandler: requireRole("ADMIN"), config: { rateLimit: { max: 10, timeWindow: "1 hour" } } },
+    async (request, reply) => {
+      const params = z.object({ id: z.string().uuid() }).parse(request.params);
+
+      const user = await prisma.user.findUnique({ where: { id: params.id } });
+      if (!user) throw Errors.notFound("Usuario nao encontrado");
+
+      const temporaryPassword = randomBytes(18).toString("base64url");
+      const passwordHash = await hashPassword(temporaryPassword);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash, mustChangePassword: true },
+      });
+
+      await revokeAllUserSessions(user.id);
+
+      await recordAudit(
+        { actorUserId: request.currentUser!.id, ip: request.ip, userAgent: request.headers["user-agent"] },
+        { action: "PASSWORD_RESET_BY_ADMIN", entityType: "user", entityId: user.id }
+      );
+
+      // A senha temporaria so existe nesta resposta — nunca fica salva em
+      // lugar nenhum (nem log, nem auditoria) alem do hash acima.
+      return reply.send({ temporaryPassword });
+    }
+  );
 };
