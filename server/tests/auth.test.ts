@@ -22,21 +22,21 @@ describe("autenticacao", () => {
     const res = await app.inject({
       method: "POST",
       url: "/auth/login",
-      payload: { email: "admin@teste.com", password: "senha-errada" },
+      payload: { identifier: "admin@teste.com", password: "senha-errada" },
     });
     expect(res.statusCode).toBe(401);
     const body = JSON.parse(res.body);
-    expect(body.error.message).toBe("Email ou senha invalidos");
+    expect(body.error.message).toBe("Credenciais invalidas");
   });
 
   it("rejeita login de email inexistente com a MESMA mensagem generica (nao revela se o email existe)", async () => {
     const res = await app.inject({
       method: "POST",
       url: "/auth/login",
-      payload: { email: "nao-existe@teste.com", password: "qualquer" },
+      payload: { identifier: "nao-existe@teste.com", password: "qualquer" },
     });
     expect(res.statusCode).toBe(401);
-    expect(JSON.parse(res.body).error.message).toBe("Email ou senha invalidos");
+    expect(JSON.parse(res.body).error.message).toBe("Credenciais invalidas");
   });
 
   it("aceita login correto e seta cookie HttpOnly", async () => {
@@ -44,7 +44,7 @@ describe("autenticacao", () => {
     const res = await app.inject({
       method: "POST",
       url: "/auth/login",
-      payload: { email: "admin@teste.com", password: "SenhaForte12345" },
+      payload: { identifier: "admin@teste.com", password: "SenhaForte12345" },
     });
     expect(res.statusCode).toBe(200);
     const sidCookie = res.cookies.find((c) => c.name === "sid");
@@ -74,7 +74,7 @@ describe("autenticacao", () => {
     const res = await app.inject({
       method: "POST",
       url: "/auth/login",
-      payload: { email: "inativo@teste.com", password: "SenhaForte12345" },
+      payload: { identifier: "inativo@teste.com", password: "SenhaForte12345" },
     });
     expect(res.statusCode).toBe(401);
   });

@@ -14,8 +14,10 @@ import { recordAudit } from "../audit/audit.service.js";
 import { requireAuth } from "./auth.plugin.js";
 import { env } from "../../config/env.js";
 
+// "identifier" aceita tanto o email quanto o nome de exibicao do usuario —
+// ambos sao @unique no schema (ver User.name em schema.prisma).
 const loginSchema = z.object({
-  email: z.string().email(),
+  identifier: z.string().min(1).max(160),
   password: z.string().min(1),
 });
 
@@ -39,12 +41,12 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       const parsed = loginSchema.safeParse(request.body);
       if (!parsed.success) throw Errors.badRequest("Dados de login invalidos");
 
-      const { email, password } = parsed.data;
-      const genericError = Errors.unauthorized("Email ou senha invalidos");
+      const { identifier, password } = parsed.data;
+      const genericError = Errors.unauthorized("Credenciais invalidas");
 
-      const user = await prisma.user.findUnique({ where: { email } });
+      const user = await prisma.user.findFirst({ where: { OR: [{ email: identifier }, { name: identifier }] } });
       if (!user || user.status !== "ACTIVE") {
-        // Mensagem generica: nao revela se o email existe.
+        // Mensagem generica: nao revela se o email/nome existe.
         throw genericError;
       }
 

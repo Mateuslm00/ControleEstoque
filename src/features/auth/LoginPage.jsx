@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Mail, KeyRound, Eye, EyeOff, ArrowRight, TriangleAlert } from "lucide-react";
+import { User, KeyRound, Eye, EyeOff, ArrowRight, TriangleAlert } from "lucide-react";
 import "./LoginPage.css";
 
 /**
@@ -23,14 +23,16 @@ import "./LoginPage.css";
  *    para não revelar se o e-mail existe ou não.
  *
  * Props:
- *  - onSubmit(email, password): Promise
+ *  - onSubmit(identifier, password): Promise
  *      Função fornecida pelo componente pai (App.jsx) que efetivamente
- *      chama POST /auth/login. Deve rejeitar a Promise em caso de falha
- *      para esta tela poder exibir o aviso de erro.
+ *      chama POST /auth/login. `identifier` pode ser o e-mail OU o nome
+ *      de exibição do usuário — o backend aceita os dois (ambos são
+ *      únicos no banco, ver User.name em schema.prisma). Deve rejeitar a
+ *      Promise em caso de falha para esta tela poder exibir o aviso de erro.
  * -----------------------------------------------------------------------
  */
 export default function LoginPage({ onSubmit }) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [keepSession, setKeepSession] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,19 +43,19 @@ export default function LoginPage({ onSubmit }) {
     event.preventDefault();
     setError("");
 
-    if (!email.trim() || !password) {
-      setError("Informe e-mail e senha para continuar.");
+    if (!identifier.trim() || !password) {
+      setError("Informe e-mail/nome e senha para continuar.");
       return;
     }
 
     setLoading(true);
     try {
-      await onSubmit?.(email.trim(), password, keepSession);
+      await onSubmit?.(identifier.trim(), password, keepSession);
     } catch {
       // Mensagem sempre genérica: o backend já retorna erro genérico de
-      // propósito (não revela se o e-mail existe), então aqui repetimos
-      // a mesma cautela em vez de tentar detalhar a causa.
-      setError("E-mail ou senha inválidos.");
+      // propósito (não revela se o e-mail/nome existe), então aqui
+      // repetimos a mesma cautela em vez de tentar detalhar a causa.
+      setError("Credenciais inválidas.");
     } finally {
       setLoading(false);
     }
@@ -82,22 +84,22 @@ export default function LoginPage({ onSubmit }) {
         {/* ===== Coluna direita: formulário de login ===== */}
         <main className="form-side">
           <h1>Entrar no sistema</h1>
-          <p className="copy">Use seu e-mail corporativo. O menu será liberado conforme seu perfil.</p>
+          <p className="copy">Use seu e-mail ou nome de usuário. O menu será liberado conforme seu perfil.</p>
 
           <form aria-label="Formulário de login" onSubmit={handleSubmit} noValidate>
-            {/* Campo de e-mail */}
+            {/* Campo de identificação: aceita e-mail OU nome */}
             <div className="field">
-              <label htmlFor="login-email">E-mail</label>
+              <label htmlFor="login-identifier">E-mail ou nome</label>
               <div className={`input${error ? " has-error" : ""}`}>
-                <Mail aria-hidden="true" />
+                <User aria-hidden="true" />
                 <input
-                  id="login-email"
-                  name="email"
-                  type="email"
+                  id="login-identifier"
+                  name="identifier"
+                  type="text"
                   autoComplete="username"
-                  placeholder="seu.nome@empresa.com.br"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu.nome@empresa.com.br ou seu nome"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   disabled={loading}
                   required
                 />

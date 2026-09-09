@@ -37,7 +37,8 @@ enum EmailJobStatus {
 
 model User {
   id             String    @id @default(uuid())
-  name           String
+  // unico porque tambem serve para login (junto com email) — ver auth.routes.ts
+  name           String    @unique
   email          String    @unique
   passwordHash   String    @map("password_hash")
   role           UserRole

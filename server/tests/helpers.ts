@@ -37,7 +37,7 @@ export async function createUser(params: { email: string; password: string; role
 
 /** Faz login via injection e retorna o cookie de sessao pronto para uso em outras requisicoes. */
 export async function loginAndGetCookie(app: FastifyInstance, email: string, password: string): Promise<string> {
-  const res = await app.inject({ method: "POST", url: "/auth/login", payload: { email, password } });
+  const res = await app.inject({ method: "POST", url: "/auth/login", payload: { identifier: email, password } });
   const cookieHeader = res.cookies.find((c) => c.name === "sid");
   if (!cookieHeader) throw new Error(`Login falhou: ${res.body}`);
   return `sid=${cookieHeader.value}`;

@@ -86,8 +86,8 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     if (!parsed.success) throw Errors.badRequest("Dados de usuario invalidos");
     const { name, email, password, role } = parsed.data;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) throw Errors.conflict("Email ja cadastrado");
+    const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { name }] } });
+    if (existing) throw Errors.conflict("Email ou nome ja cadastrado");
 
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
@@ -111,6 +111,11 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     const before = await prisma.user.findUnique({ where: { id: params.id } });
     if (!before) throw Errors.notFound("Usuario nao encontrado");
+
+    if (parsed.data.name && parsed.data.name !== before.name) {
+      const nameTaken = await prisma.user.findFirst({ where: { name: parsed.data.name, id: { not: params.id } } });
+      if (nameTaken) throw Errors.conflict("Nome ja usado por outro usuario");
+    }
 
     const roleChanged = parsed.data.role && parsed.data.role !== before.role;
 
