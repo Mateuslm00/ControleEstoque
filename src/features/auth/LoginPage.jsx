@@ -1,16 +1,5 @@
 import { useState } from "react";
-import {
-  ShieldCheck,
-  LockKeyhole,
-  FileClock,
-  ScanFace,
-  Mail,
-  KeyRound,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  TriangleAlert,
-} from "lucide-react";
+import { Mail, KeyRound, Eye, EyeOff, ArrowRight, TriangleAlert } from "lucide-react";
 import "./LoginPage.css";
 
 /**
@@ -85,31 +74,13 @@ export default function LoginPage({ onSubmit }) {
 
           {/* Frase de efeito + descrição */}
           <div>
-            <h2>Login seguro para estoque, cotação e romaneio.</h2>
-            <p>Acesso por perfil, sessão protegida e auditoria das operações críticas.</p>
+            <h2>Estoque, cotação e romaneio em um só lugar.</h2>
+            <p>Acesso por perfil: cada usuário vê só o que precisa do sistema.</p>
           </div>
-
-          {/* Lista de benefícios/garantias de segurança */}
-          <ul className="badges">
-            <li>
-              <ShieldCheck aria-hidden="true" /> Cookie seguro no servidor
-            </li>
-            <li>
-              <LockKeyhole aria-hidden="true" /> Admin separado de usuários comuns
-            </li>
-            <li>
-              <FileClock aria-hidden="true" /> Rastreabilidade completa
-            </li>
-          </ul>
         </aside>
 
         {/* ===== Coluna direita: formulário de login ===== */}
         <main className="form-side">
-          {/* Selo "Acesso restrito" */}
-          <div className="access">
-            <ScanFace aria-hidden="true" /> Acesso restrito
-          </div>
-
           <h1>Entrar no sistema</h1>
           <p className="copy">Use seu e-mail corporativo. O menu será liberado conforme seu perfil.</p>
 
@@ -189,12 +160,6 @@ export default function LoginPage({ onSubmit }) {
               <span>{error}</span>
             </div>
           )}
-
-          {/* Aviso padrão de acesso restrito */}
-          <div className="notice">
-            <TriangleAlert aria-hidden="true" />
-            <span>Acesso restrito ao sistema de Controle de Estoque.</span>
-          </div>
         </main>
       </section>
     </div>
