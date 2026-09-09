@@ -34,12 +34,12 @@
    Grid de 2 colunas: painel de marca (300px) + formulário (resto)
 ============================================================ */
 #controle-estoque-login .shell {
-  width: min(100%, 760px);
-  min-height: 430px;
+  width: min(100%, 960px);
+  min-height: 540px;
   display: grid;
-  grid-template-columns: 300px minmax(320px, 1fr);
+  grid-template-columns: 380px minmax(380px, 1fr);
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--login-line);
   background: var(--login-panel);
   box-shadow: light-dark(0 18px 54px rgba(18, 39, 32, .14), 0 18px 54px rgba(0, 0, 0, .35));
@@ -49,11 +49,11 @@
    COLUNA ESQUERDA — PAINEL DE MARCA (.brand)
 ============================================================ */
 #controle-estoque-login .brand {
-  padding: 28px;
+  padding: 40px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 24px;
+  gap: 28px;
   background: linear-gradient(150deg, #123c31, #0b2a22);
   color: #f2fbf7;
 }
@@ -66,7 +66,7 @@
 
 #controle-estoque-login .brand-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 500;
   letter-spacing: 0;
 }
@@ -74,13 +74,13 @@
 #controle-estoque-login .brand-subtitle {
   margin: 1px 0 0;
   color: rgba(242, 251, 247, .72);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 #controle-estoque-login .brand h2 {
-  margin: 0 0 11px;
-  font-size: 24px;
-  line-height: 1.16;
+  margin: 0 0 13px;
+  font-size: 29px;
+  line-height: 1.18;
   font-weight: 500;
   letter-spacing: 0;
 }
@@ -88,8 +88,8 @@
 #controle-estoque-login .brand p {
   margin: 0;
   color: rgba(242, 251, 247, .76);
-  font-size: 13px;
-  line-height: 1.48;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* Lista de benefícios ("cookie seguro", "admin separado"...) */
@@ -104,16 +104,16 @@
 #controle-estoque-login .badges li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   color: rgba(242, 251, 247, .84);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* ============================================================
    COLUNA DIREITA — FORMULÁRIO (.form-side)
 ============================================================ */
 #controle-estoque-login .form-side {
-  padding: 30px;
+  padding: 44px;
   display: grid;
   align-content: center;
 }
@@ -135,17 +135,17 @@
 
 #controle-estoque-login h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 29px;
   line-height: 1.15;
   font-weight: 500;
   letter-spacing: 0;
 }
 
 #controle-estoque-login .copy {
-  margin: 8px 0 20px;
+  margin: 9px 0 24px;
   color: var(--login-muted);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /* ============================================================
@@ -153,26 +153,26 @@
 ============================================================ */
 #controle-estoque-login form {
   display: grid;
-  gap: 13px;
+  gap: 16px;
 }
 
 #controle-estoque-login .field {
   display: grid;
-  gap: 6px;
+  gap: 7px;
 }
 
 #controle-estoque-login label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
 }
 
 /* Caixa que envolve ícone + input de cada campo */
 #controle-estoque-login .input {
-  min-height: 42px;
+  min-height: 48px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 11px;
+  gap: 9px;
+  padding: 0 13px;
   border: 1px solid var(--login-line);
   border-radius: 8px;
   background: var(--login-panel);
@@ -208,7 +208,7 @@
   background: transparent;
   color: var(--login-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 /* Botão de mostrar/ocultar senha, dentro do campo de senha */
@@ -253,13 +253,13 @@
 
 /* Botão principal de envio */
 #controle-estoque-login .submit {
-  min-height: 44px;
+  min-height: 50px;
   border: 0;
   border-radius: 8px;
   background: linear-gradient(135deg, var(--login-accent), var(--login-accent-dark));
   color: light-dark(#ffffff, #082018);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -302,21 +302,22 @@
 /* ============================================================
    RESPONSIVO — telas até 700px (celular)
 ============================================================ */
-@media (max-width: 700px) {
+@media (max-width: 860px) {
   #controle-estoque-login .shell {
-    width: min(100%, 430px);
+    width: min(100%, 460px);
+    min-height: 0;
     grid-template-columns: 1fr; /* colunas empilham em vez de lado a lado */
   }
   #controle-estoque-login .brand {
-    padding: 22px;
+    padding: 26px;
   }
   #controle-estoque-login .brand h2 {
-    font-size: 21px;
+    font-size: 22px;
   }
   #controle-estoque-login .badges {
     display: none; /* esconde a lista de benefícios pra economizar espaço */
   }
   #controle-estoque-login .form-side {
-    padding: 24px;
+    padding: 26px;
   }
 }

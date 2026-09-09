@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOut, User, Users, KeyRound } from "lucide-react";
+import { LogOut, User, Users, KeyRound, Menu, X } from "lucide-react";
 import { NAV } from "../../data/constants.js";
 import ChangePasswordModal from "../../features/auth/ChangePasswordModal.jsx";
 
@@ -7,8 +7,12 @@ import ChangePasswordModal from "../../features/auth/ChangePasswordModal.jsx";
  * Header
  * -----------------------------------------------------------------------
  * Barra de topo (título + usuário logado/sair, como no layout original)
- * mais o menu lateral fixo (sempre visível, sem gaveta/hamburguer) logo
- * abaixo dela.
+ * mais o menu lateral logo abaixo dela.
+ *
+ * Responsivo: em telas médias/grandes (md: >=768px) o menu fica fixo e
+ * sempre visível, como pedido. Em celular ele viraria praticamente metade
+ * da tela sempre visível, então abaixo de md ele volta a ser uma gaveta
+ * que abre/fecha por um botão hamburguer — só nesse tamanho de tela.
  *
  * Mesmo esquema de filtragem por `role` que a Sidebar original tinha:
  * quem não é ADMIN nunca vê "Usuários", por exemplo. Isso é só a parte
@@ -27,6 +31,12 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
   const isAdmin = role === "ADMIN";
   const [profileOpen, setProfileOpen] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleSelect = (key) => {
+    onChangeTab(key);
+    setMenuOpen(false);
+  };
 
   return (
     <>
@@ -35,9 +45,20 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
         style={{ background: "linear-gradient(to bottom, var(--primary-deep), var(--primary-neon))" }}
       >
         <div className="flex items-center justify-between px-4 sm:px-6 h-16">
-          <div className="leading-tight">
-            <div className="text-white font-extrabold text-sm sm:text-base">Controlador de Estoque</div>
-            <div className="text-[11px]" style={{ color: "#9FC3BD" }}>Grupo Multiunidades</div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={menuOpen}
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg shrink-0 transition-colors"
+              style={{ background: "rgba(255,255,255,0.1)", color: "white" }}
+            >
+              {menuOpen ? <X size={19} /> : <Menu size={19} />}
+            </button>
+            <div className="leading-tight">
+              <div className="text-white font-extrabold text-sm sm:text-base">Controlador de Estoque</div>
+              <div className="text-[11px]" style={{ color: "#9FC3BD" }}>Grupo Multiunidades</div>
+            </div>
           </div>
 
           {userName && (
@@ -109,9 +130,23 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
         <ChangePasswordModal onClose={() => setChangingPassword(false)} onDone={() => setChangingPassword(false)} />
       )}
 
+      {/* Overlay escuro só no mobile, atrás da gaveta — clicar fecha o menu */}
+      {menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          className="md:hidden fixed inset-0 top-16 z-30"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+        />
+      )}
+
       <nav
-        className="fixed top-16 left-0 w-64 z-30 flex flex-col px-3 py-4 no-print"
-        style={{ height: "calc(100vh - 4rem)", background: "linear-gradient(to top, var(--primary-deep), var(--primary-neon))" }}
+        className={`fixed top-16 left-0 w-64 z-40 flex flex-col px-3 py-4 no-print transition-transform duration-200 md:translate-x-0 ${
+          menuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        style={{
+          height: "calc(100vh - 4rem)",
+          background: "linear-gradient(to top, var(--primary-deep), var(--primary-neon))",
+        }}
       >
         {visibleItems.map((n) => {
           const Icon = n.icon;
@@ -119,7 +154,7 @@ export default function Header({ tab, onChangeTab, role, userName, onLogout }) {
           return (
             <button
               key={n.key}
-              onClick={() => onChangeTab(n.key)}
+              onClick={() => handleSelect(n.key)}
               className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 rounded-lg text-sm text-left transition-colors"
               style={{
                 background: active ? "rgba(255,255,255,0.14)" : "transparent",

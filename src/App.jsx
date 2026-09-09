@@ -111,7 +111,7 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 ml-64 pt-16">
+      <main className="flex-1 md:ml-64 pt-16">
         {activeTab === "dashboard" && <Dashboard />}
         {activeTab === "materiais" && <MateriaisTab />}
         {activeTab === "fornecedores" && <FornecedoresTab />}
