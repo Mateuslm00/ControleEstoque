@@ -52,8 +52,8 @@ export default function App() {
       .finally(() => setCheckingSession(false));
   }, []);
 
-  const handleLogin = async (identifier, password) => {
-    const data = await authApi.login(identifier, password);
+  const handleLogin = async (identifier, password, rememberMe) => {
+    const data = await authApi.login(identifier, password, rememberMe);
     setCurrentUser(data.user);
   };
 

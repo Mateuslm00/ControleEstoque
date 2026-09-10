@@ -9,6 +9,10 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET deve ter pelo menos 32 caracteres"),
   SESSION_ABSOLUTE_TTL_HOURS: z.coerce.number().positive().default(8),
   SESSION_IDLE_TTL_MINUTES: z.coerce.number().positive().default(30),
+  // Usados quando o usuario marca "Manter sessao" no login: sessao dura bem
+  // mais e tolera ficar ociosa por mais tempo sem deslogar.
+  SESSION_REMEMBER_TTL_DAYS: z.coerce.number().positive().default(30),
+  SESSION_REMEMBER_IDLE_TTL_HOURS: z.coerce.number().positive().default(72),
 
   COOKIE_DOMAIN: z.string().default("localhost"),
   // z.coerce.boolean() trataria qualquer string nao-vazia (incl. "false") como true;

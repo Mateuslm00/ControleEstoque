@@ -17,10 +17,14 @@ export async function createSession(params: {
   userId: string;
   ip?: string;
   userAgent?: string;
+  rememberMe?: boolean;
 }): Promise<{ token: string; expiresAt: Date }> {
   const token = generateSessionToken();
   const tokenHash = hashToken(token);
-  const expiresAt = new Date(Date.now() + env.SESSION_ABSOLUTE_TTL_HOURS * 60 * 60 * 1000);
+  const ttlMs = params.rememberMe
+    ? env.SESSION_REMEMBER_TTL_DAYS * 24 * 60 * 60 * 1000
+    : env.SESSION_ABSOLUTE_TTL_HOURS * 60 * 60 * 1000;
+  const expiresAt = new Date(Date.now() + ttlMs);
 
   await prisma.session.create({
     data: {
@@ -29,6 +33,7 @@ export async function createSession(params: {
       ip: params.ip,
       userAgent: params.userAgent,
       expiresAt,
+      rememberMe: !!params.rememberMe,
     },
   });
 
@@ -61,7 +66,9 @@ export async function findValidSession(token: string) {
   if (session.expiresAt.getTime() < Date.now()) return null;
   if (session.user.status !== "ACTIVE") return null;
 
-  const idleLimitMs = env.SESSION_IDLE_TTL_MINUTES * 60 * 1000;
+  const idleLimitMs = session.rememberMe
+    ? env.SESSION_REMEMBER_IDLE_TTL_HOURS * 60 * 60 * 1000
+    : env.SESSION_IDLE_TTL_MINUTES * 60 * 1000;
   if (Date.now() - session.lastSeenAt.getTime() > idleLimitMs) {
     await revokeSession(tokenHash);
     return null;

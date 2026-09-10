@@ -70,6 +70,7 @@ model Session {
   lastSeenAt DateTime  @default(now()) @map("last_seen_at")
   revokedAt  DateTime? @map("revoked_at")
   createdAt  DateTime  @default(now()) @map("created_at")
+  rememberMe Boolean   @default(false) @map("remember_me")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -81,6 +82,7 @@ model Session {
 model Material {
   id        String   @id @default(uuid())
   name      String
+  brand     String?
   sku       String   @unique
   unit      String
   type      String?

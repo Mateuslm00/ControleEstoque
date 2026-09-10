@@ -10,6 +10,7 @@ const SORT_ALLOWLIST = ["name", "sku", "createdAt", "minStock"] as const;
 
 const createSchema = z.object({
   name: z.string().min(1).max(160),
+  brand: z.string().max(120).optional(),
   sku: z.string().min(1).max(60),
   unit: z.string().min(1).max(20),
   type: z.string().max(80).optional(),

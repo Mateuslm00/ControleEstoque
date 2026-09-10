@@ -105,8 +105,8 @@ export async function apiFetchBlob(path) {
 }
 
 export const authApi = {
-  login: (identifier, password) =>
-    apiFetch("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password }) }),
+  login: (identifier, password, rememberMe) =>
+    apiFetch("/auth/login", { method: "POST", body: JSON.stringify({ identifier, password, rememberMe }) }),
   logout: () => apiFetch("/auth/logout", { method: "POST" }),
   me: () => apiFetch("/auth/me"),
 };

@@ -19,6 +19,7 @@ import { env } from "../../config/env.js";
 const loginSchema = z.object({
   identifier: z.string().min(1).max(160),
   password: z.string().min(1),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 const changePasswordSchema = z.object({
@@ -41,7 +42,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
       const parsed = loginSchema.safeParse(request.body);
       if (!parsed.success) throw Errors.badRequest("Dados de login invalidos");
 
-      const { identifier, password } = parsed.data;
+      const { identifier, password, rememberMe } = parsed.data;
       const genericError = Errors.unauthorized("Credenciais invalidas");
 
       const user = await prisma.user.findFirst({ where: { OR: [{ email: identifier }, { name: identifier }] } });
@@ -63,6 +64,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         userId: user.id,
         ip: request.ip,
         userAgent: request.headers["user-agent"],
+        rememberMe,
       });
 
       await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });

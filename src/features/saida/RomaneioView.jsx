@@ -71,7 +71,7 @@ export default function RomaneioView({ saleId, docNumber, onClose }) {
           ref={iframeRef}
           title={`Romaneio ${docNumber}`}
           srcDoc={html}
-          sandbox=""
+          sandbox="allow-same-origin allow-modals"
           style={{ width: "100%", height: "70vh", border: 0 }}
         />
       )}

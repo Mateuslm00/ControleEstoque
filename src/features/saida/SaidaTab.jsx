@@ -147,6 +147,31 @@ export default function SaidaTab() {
     setOpen(true);
   };
 
+  // Sugere o preço de venda assim que o material é selecionado: pega o custo
+  // do próximo lote a sair por FEFO (GET /stock/lots já ordena por
+  // expiresAt asc) e aplica o markup padrão cadastrado no material. É só uma
+  // sugestão pré-preenchida — o usuário ainda pode editar o valor à mão, e o
+  // backend recalcula/valida tudo de novo ao finalizar a venda.
+  useEffect(() => {
+    if (!itMaterialId || !open) return;
+    const material = materialById(itMaterialId);
+    if (!material) return;
+    let cancelled = false;
+    apiFetch(`/stock/lots?materialId=${itMaterialId}&status=ACTIVE&pageSize=1`)
+      .then((data) => {
+        if (cancelled) return;
+        const nextLot = data.items?.[0];
+        if (!nextLot) return;
+        const suggested = Number(nextLot.unitCost) * (1 + Number(material.markup) / 100);
+        setItPrice(suggested.toFixed(2));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itMaterialId, open]);
+
   const addItem = () => {
     if (!itMaterialId || !itQty || Number(itQty) <= 0 || !itPrice || Number(itPrice) < 0) return;
     if (Number(itQty) > availableForItem) return;
