@@ -38,9 +38,11 @@ EMAIL_MODE=dev
 EMAIL_FROM=Controle de Estoque <no-reply@localhost>
 ```
 
-**Build Command**: `npm ci --include=dev && npx prisma generate && npm run build`
+**Build Command**: `npm ci --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build`
 (precisa do `--include=dev` porque `NODE_ENV=production` faz o `npm install`
-pular devDependencies como `typescript`/`@types/node`, quebrando o build.)
+pular devDependencies como `typescript`/`@types/node`, quebrando o build. O
+`prisma migrate deploy` aplica as migrations pendentes no PostgreSQL de
+produção antes de iniciar o backend.)
 
 **Start Command**: `npm start` (roda `node dist/src/server.js` — sem
 `--env-file`, já que o Render injeta as variáveis direto no processo).
@@ -62,9 +64,9 @@ VITE_API_URL=https://controle-estoque-api-sttl.onrender.com
 Projeto `ControleEstoque`, região `AWS us-east-2 (Ohio)` — mesma região do
 Render, para reduzir latência entre API e banco.
 
-Migrations aplicadas com `npx prisma migrate deploy` (nunca `migrate dev`
-contra produção). Sempre que uma migration nova for criada localmente,
-aplicar também no Neon:
+Migrations aplicadas automaticamente pelo Build Command com `npx prisma migrate deploy`
+(nunca `migrate dev` contra produção). Sempre que uma migration nova for
+criada localmente, ela deve ser commitada e enviada ao GitHub antes do deploy:
 
 ```bash
 DATABASE_URL="<connection string do Neon>" npx prisma migrate deploy

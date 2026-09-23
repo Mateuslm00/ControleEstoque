@@ -122,11 +122,21 @@ export default function EntradaTab() {
         <Modal title="Nova entrada de estoque" onClose={() => setOpen(false)} wide>
           {formError && <div className="text-sm mb-2" style={{ color: "var(--danger)" }}>{formError}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Material">
-              <select value={form.materialId} onChange={(e) => setForm({ ...form, materialId: e.target.value })}>
-                {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
-            </Field>
+            <div>
+              <Field label="Material">
+                <select value={form.materialId} onChange={(e) => setForm({ ...form, materialId: e.target.value })}>
+                  {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Marca">
+                <input
+                  value={matOf(form.materialId)?.brand || ""}
+                  placeholder="Marca não informada"
+                  readOnly
+                  style={{ background: "#F0F3F2", color: "var(--muted)" }}
+                />
+              </Field>
+            </div>
             <Field label="Fornecedor">
               <select value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })}>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

@@ -41,6 +41,7 @@ export default function NovaCotacaoModal({ materials, suppliers, onSaved, onClos
   const distinctSuppliers = new Set(validRows.map((r) => r.supplierId));
   const hasDuplicate = validRows.length !== distinctSuppliers.size;
   const canSave = materialId && validRows.length >= MIN_QUOTES && !hasDuplicate;
+  const selectedMaterial = materials.find((m) => m.id === materialId);
 
   const save = async () => {
     if (!canSave) return;
@@ -68,11 +69,21 @@ export default function NovaCotacaoModal({ materials, suppliers, onSaved, onClos
     <Modal title="Nova cotação" onClose={onClose} wide>
       {formError && <div className="text-sm mb-2" style={{ color: "var(--danger)" }}>{formError}</div>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="Material">
-          <select value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
-            {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
-        </Field>
+        <div>
+          <Field label="Material">
+            <select value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
+              {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+          </Field>
+          <Field label="Marca">
+            <input
+              value={selectedMaterial?.brand || ""}
+              placeholder="Marca não informada"
+              readOnly
+              style={{ background: "#F0F3F2", color: "var(--muted)" }}
+            />
+          </Field>
+        </div>
         <Field label="Data da cotação">
           <input type="date" value={quoteDate} onChange={(e) => setQuoteDate(e.target.value)} />
         </Field>
