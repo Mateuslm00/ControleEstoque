@@ -101,7 +101,7 @@ export default function EntradaTab() {
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando entradas...</div>
           ) : entries.length === 0 ? <EmptyState text="Nenhuma entrada registrada." /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[28rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
-              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>NFe</th><th>Materiais</th><th>Valor total</th></tr></thead>
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>NFe</th><th>Materiais</th><th>Marca</th><th>Valor total</th></tr></thead>
               <tbody>
                 {entries.map((e) => (
                   <tr key={e.id}>
@@ -109,6 +109,7 @@ export default function EntradaTab() {
                     <td className="text-sm">{e.supplier?.name}</td>
                     <td className="text-sm mono">{e.invoiceNumber}</td>
                     <td className="text-sm">{e.items?.map((it) => it.material?.name).join(", ")}</td>
+                    <td className="text-sm">{e.items?.map((it) => it.material?.brand || "-").join(", ")}</td>
                     <td className="text-sm mono">{e.totalValue !== undefined ? brl(e.totalValue) : "—"}</td>
                   </tr>
                 ))}

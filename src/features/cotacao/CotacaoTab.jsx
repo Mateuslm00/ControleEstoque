@@ -117,7 +117,7 @@ export default function CotacaoTab() {
             <div className="overflow-x-auto overflow-y-auto min-h-[12rem] max-h-80"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}>
                 <tr>
-                  <th>Data</th><th>Material</th>
+                  <th>Data</th><th>Material</th><th>Marca</th>
                   <th>Menor preço</th><th>Fornecedor (menor)</th>
                   <th>Maior preço</th><th>Fornecedor (maior)</th>
                   <th>Economia</th>
@@ -132,6 +132,7 @@ export default function CotacaoTab() {
                     <tr key={q.id}>
                       <td className="text-sm">{brDate(q.quoteDate)}</td>
                       <td className="text-sm font-medium">{q.material?.name}</td>
+                      <td className="text-sm">{q.material?.brand || "-"}</td>
                       <td className="text-sm mono font-semibold" style={{ color: "var(--primary-dark)" }}>{brl(best?.price)}</td>
                       <td className="text-sm flex items-center gap-1"><Award size={12} style={{ color: "var(--accent)" }} />{best?.supplier?.name}</td>
                       <td className="text-sm mono" style={{ color: "var(--danger)" }}>{brl(worst?.price)}</td>
