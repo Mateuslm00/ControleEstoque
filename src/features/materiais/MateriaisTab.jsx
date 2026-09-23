@@ -44,13 +44,13 @@ export default function MateriaisTab() {
   const types = [...new Set(materials.map((m) => m.type).filter(Boolean))];
   const groups = [...new Set(materials.map((m) => m.group).filter(Boolean))];
 
-  const empty = { name: "", brand: "", sku: "", type: "", group: "", unit: "un", markup: DEFAULT_MARKUP, minStock: 0 };
+  const empty = { name: "", sku: "", type: "", group: "", unit: "un", markup: DEFAULT_MARKUP, minStock: 0 };
   const [form, setForm] = useState(empty);
 
   const openNew = () => { setForm(empty); setEditing(null); setFormError(""); setOpen(true); };
   const openEdit = (m) => {
     setForm({
-      name: m.name, brand: m.brand || "", sku: m.sku, type: m.type || "", group: m.group || "",
+      name: m.name, sku: m.sku, type: m.type || "", group: m.group || "",
       unit: m.unit, markup: Number(m.markup), minStock: Number(m.minStock),
     });
     setEditing(m.id);
@@ -68,7 +68,6 @@ export default function MateriaisTab() {
     try {
       const payload = {
         name: form.name.trim(),
-        brand: form.brand.trim() || undefined,
         sku: form.sku.trim(),
         unit: form.unit,
         type: form.type || undefined,
@@ -119,12 +118,11 @@ export default function MateriaisTab() {
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando materiais...</div>
           ) : filtered.length === 0 ? <EmptyState text="Nenhum material cadastrado." /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[24rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
-              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>Marca</th><th>SKU</th><th>Tipo</th><th>Grupo</th><th>Un. medida</th><th>Markup padrão</th><th>Status</th><th></th></tr></thead>
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>SKU</th><th>Tipo</th><th>Grupo</th><th>Un. medida</th><th>Markup padrão</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {filtered.map((m) => (
                   <tr key={m.id}>
                     <td className="text-sm font-medium">{m.name}</td>
-                    <td className="text-sm">{m.brand || "-"}</td>
                     <td className="text-sm mono">{m.sku}</td>
                     <td className="text-sm">{m.type || "-"}</td>
                     <td className="text-sm">{m.group || "-"}</td>
@@ -154,9 +152,6 @@ export default function MateriaisTab() {
           {formError && <div className="text-sm mb-2" style={{ color: "var(--danger)" }}>{formError}</div>}
           <Field label="Nome do material">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Luva de Procedimento M" />
-          </Field>
-          <Field label="Marca do material">
-            <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Descarpack" />
           </Field>
           <Field label="SKU (código único)">
             <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ex: LUV-M-001" disabled={!!editing} />
