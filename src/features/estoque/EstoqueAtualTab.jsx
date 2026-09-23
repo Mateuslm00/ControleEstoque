@@ -79,8 +79,8 @@ export default function EstoqueAtualTab() {
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando estoque...</div>
           ) : rows.length === 0 ? <EmptyState text="Nenhum lote em estoque no momento." /> : (
             <>
-              <div className="overflow-x-auto"><table className="w-full min-w-[640px]">
-                <thead>
+              <div className="overflow-x-auto overflow-y-auto min-h-[24rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
+                <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}>
                   <tr>
                     <th>Material</th><th>Tipo</th><th>Grupo</th><th>Validade</th>
                     <th>Quantidade</th><th>Valor individual</th><th>Valor total</th>

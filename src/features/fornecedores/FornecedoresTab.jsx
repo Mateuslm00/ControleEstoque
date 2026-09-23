@@ -86,7 +86,7 @@ export default function FornecedoresTab() {
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando fornecedores...</div>
           ) : suppliers.length === 0 ? <EmptyState text="Nenhum fornecedor cadastrado." /> : (
-            <div className="overflow-x-auto overflow-y-auto max-h-[34rem]"><table className="w-full min-w-[640px]">
+            <div className="overflow-x-auto overflow-y-auto min-h-[24rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Fornecedor</th><th>CNPJ</th><th>Pessoa de contato</th><th>Telefone</th><th>E-mail</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {suppliers.map((s) => (

@@ -93,8 +93,8 @@ export default function UsuariosTab() {
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando usuários...</div>
           ) : (
-            <div className="overflow-x-auto"><table className="w-full min-w-[640px]">
-              <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Último login</th><th></th></tr></thead>
+            <div className="overflow-x-auto overflow-y-auto min-h-[24rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Último login</th><th></th></tr></thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id}>

@@ -340,8 +340,8 @@ export default function SaidaTab() {
           {cart.length > 0 && (
             <div className="mb-3">
               <div className="text-xs font-bold uppercase mb-2" style={{ color: "var(--muted)" }}>Itens do romaneio</div>
-              <div className="overflow-x-auto"><table className="w-full min-w-[640px]">
-                <thead><tr><th>Material</th><th>Qtd.</th><th>Preço unitário</th><th>Subtotal</th><th></th></tr></thead>
+              <div className="overflow-x-auto overflow-y-auto max-h-56"><table className="w-full min-w-[640px]">
+                <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>Qtd.</th><th>Preço unitário</th><th>Subtotal</th><th></th></tr></thead>
                 <tbody>
                   {cart.map((c) => (
                     <tr key={c.id}>
