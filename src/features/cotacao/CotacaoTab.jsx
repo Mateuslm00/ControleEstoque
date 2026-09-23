@@ -114,8 +114,8 @@ export default function CotacaoTab() {
             <h3 className="font-bold text-sm">Últimas cotações — menor vs. maior preço</h3>
           </div>
           {recentQuotes.length === 0 ? <EmptyState text="Nenhuma cotação registrada ainda." /> : (
-            <div className="overflow-x-auto"><table className="w-full min-w-[640px]">
-              <thead>
+            <div className="overflow-x-auto overflow-y-auto max-h-64"><table className="w-full min-w-[640px]">
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}>
                 <tr>
                   <th>Data</th><th>Material</th>
                   <th>Menor preço</th><th>Fornecedor (menor)</th>
@@ -161,7 +161,7 @@ export default function CotacaoTab() {
         ))}
       </div>
 
-      <div className="px-4 sm:px-8 pb-8 grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="px-4 sm:px-8 pb-8 grid grid-cols-1 lg:grid-cols-2 gap-5 overflow-y-auto max-h-[36rem] content-start">
         {loadingStatus ? (
           <div className="col-span-2 text-sm" style={{ color: "var(--muted)" }}>Carregando materiais...</div>
         ) : filteredRows.length === 0 ? (
