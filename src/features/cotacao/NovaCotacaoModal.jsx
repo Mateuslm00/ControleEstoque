@@ -82,7 +82,7 @@ export default function NovaCotacaoModal({ materials, suppliers, onSaved, onClos
         Preços cotados (mínimo {MIN_QUOTES} fornecedores diferentes)
       </div>
 
-      <div className="space-y-2 mb-2 overflow-y-auto max-h-56 pr-1">
+      <div className="space-y-2 mb-2 overflow-y-auto max-h-72 pr-1">
         {rows.map((r) => (
           <div key={r.id} className="grid grid-cols-[1fr_140px_32px] gap-2 items-center">
             <select value={r.supplierId} onChange={(e) => updateRow(r.id, { supplierId: e.target.value })}>

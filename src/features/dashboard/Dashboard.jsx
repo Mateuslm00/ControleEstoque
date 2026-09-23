@@ -68,7 +68,7 @@ export default function Dashboard() {
             <h3 className="font-bold text-sm">Lotes próximos do vencimento</h3>
           </div>
           {expiringSoon.length === 0 ? <EmptyState text="Nenhum lote vencendo nos próximos 30 dias." /> : (
-            <div className="overflow-x-auto overflow-y-auto max-h-64"><table className="w-full min-w-[640px]">
+            <div className="overflow-x-auto overflow-y-auto max-h-96"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>Lote</th><th>Validade</th><th>Qtd.</th></tr></thead>
               <tbody>
                 {expiringSoon.map((l) => (
@@ -94,7 +94,7 @@ export default function Dashboard() {
             <h3 className="font-bold text-sm">Estoque baixo (≤ 5 unidades)</h3>
           </div>
           {lowStock.length === 0 ? <EmptyState text="Nenhum material com estoque baixo." /> : (
-            <div className="overflow-x-auto overflow-y-auto max-h-64"><table className="w-full min-w-[640px]">
+            <div className="overflow-x-auto overflow-y-auto max-h-96"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>Tipo</th><th>Qtd. total</th></tr></thead>
               <tbody>
                 {lowStock.map((m) => (

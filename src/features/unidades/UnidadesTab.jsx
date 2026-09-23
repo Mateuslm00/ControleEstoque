@@ -73,7 +73,7 @@ export default function UnidadesTab() {
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando unidades...</div>
           ) : (
-            <div className="overflow-x-auto overflow-y-auto max-h-[28rem]"><table className="w-full min-w-[640px]">
+            <div className="overflow-x-auto overflow-y-auto max-h-[34rem]"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Unidade / Cliente</th><th>CNPJ</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {units.map((u) => (

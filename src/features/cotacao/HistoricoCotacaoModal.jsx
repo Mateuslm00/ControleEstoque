@@ -22,7 +22,7 @@ export default function HistoricoCotacaoModal({ material, quotes, onClose }) {
   return (
     <Modal title={`Histórico de cotações — ${material?.name || ""}`} onClose={onClose} wide>
       {quotes.length === 0 ? <EmptyState text="Nenhuma cotação registrada para este material." /> : (
-        <div className="space-y-4 overflow-y-auto max-h-[60vh] pr-1">
+        <div className="space-y-4 overflow-y-auto max-h-[72vh] pr-1">
           {quotes.map((q) => {
             const sorted = [...q.items].sort((a, b) => a.price - b.price);
             const best = sorted[0], worst = sorted[sorted.length - 1];

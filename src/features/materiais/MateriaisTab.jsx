@@ -118,7 +118,7 @@ export default function MateriaisTab() {
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando materiais...</div>
           ) : filtered.length === 0 ? <EmptyState text="Nenhum material cadastrado." /> : (
-            <div className="overflow-x-auto overflow-y-auto max-h-[28rem]"><table className="w-full min-w-[640px]">
+            <div className="overflow-x-auto overflow-y-auto max-h-[34rem]"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>Marca</th><th>SKU</th><th>Tipo</th><th>Grupo</th><th>Un. medida</th><th>Markup padrão</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {filtered.map((m) => (
