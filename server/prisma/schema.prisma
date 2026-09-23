@@ -109,6 +109,7 @@ model Supplier {
   email         String?
   phone         String?
   contactPerson String?  @map("contact_person")
+  notes         String?
   active        Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

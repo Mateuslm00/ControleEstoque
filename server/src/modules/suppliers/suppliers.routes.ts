@@ -17,6 +17,7 @@ const createSchema = z.object({
     .transform((v) => (v ? v : undefined)),
   phone: z.string().max(30).optional(),
   contactPerson: z.string().max(120).optional(),
+  notes: z.string().max(2000).optional(),
 });
 
 const updateSchema = createSchema.partial().extend({ active: z.boolean().optional() });

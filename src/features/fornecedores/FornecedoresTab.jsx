@@ -25,14 +25,14 @@ export default function FornecedoresTab() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const empty = { name: "", cnpj: "", phone: "", contactPerson: "", email: "" };
+  const empty = { name: "", cnpj: "", phone: "", contactPerson: "", email: "", notes: "" };
   const [form, setForm] = useState(empty);
 
   const openNew = () => { setForm(empty); setEditing(null); setFormError(""); setOpen(true); };
   const openEdit = (s) => {
     setForm({
       name: s.name, cnpj: s.cnpj || "", phone: s.phone || "",
-      contactPerson: s.contactPerson || "", email: s.email || "",
+      contactPerson: s.contactPerson || "", email: s.email || "", notes: s.notes || "",
     });
     setEditing(s.id);
     setFormError("");
@@ -53,6 +53,7 @@ export default function FornecedoresTab() {
         phone: form.phone || undefined,
         contactPerson: form.contactPerson || undefined,
         email: form.email || undefined,
+        notes: form.notes || undefined,
       };
       if (editing) {
         await apiFetch(`/suppliers/${editing}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -87,7 +88,7 @@ export default function FornecedoresTab() {
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando fornecedores...</div>
           ) : suppliers.length === 0 ? <EmptyState text="Nenhum fornecedor cadastrado." /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[24rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
-              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Fornecedor</th><th>CNPJ</th><th>Pessoa de contato</th><th>Telefone</th><th>E-mail</th><th>Status</th><th></th></tr></thead>
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Fornecedor</th><th>CNPJ</th><th>Pessoa de contato</th><th>Telefone</th><th>E-mail</th><th>Observação</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {suppliers.map((s) => (
                   <tr key={s.id}>
@@ -96,6 +97,7 @@ export default function FornecedoresTab() {
                     <td className="text-sm">{s.contactPerson || "-"}</td>
                     <td className="text-sm">{s.phone || "-"}</td>
                     <td className="text-sm">{s.email || "-"}</td>
+                    <td className="text-sm" style={{ maxWidth: 220, whiteSpace: "normal" }}>{s.notes || "-"}</td>
                     <td className="text-sm">
                       <span style={{ color: s.active ? "var(--primary)" : "var(--danger)" }}>
                         {s.active ? "Ativo" : "Inativo"}
@@ -125,6 +127,9 @@ export default function FornecedoresTab() {
             <Field label="Telefone"><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(00) 00000-0000" /></Field>
             <Field label="E-mail"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
           </div>
+          <Field label="Observação">
+            <textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Ex: prazo de entrega, condições de pagamento, contato alternativo..." />
+          </Field>
           <button onClick={save} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-2">
             {saving ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar fornecedor"}
           </button>
