@@ -36,14 +36,20 @@ export default function EntradaTab() {
 
   const empty = {
     materialId: "", supplierId: "", quantity: 1, lotNumber: "",
-    expiresAt: "", unitCost: "", invoiceNumber: "", entryDate: todayISO(),
+    expiresAt: "", unitCost: "", invoiceNumber: "", entryDate: todayISO(), brand: "",
   };
   const [form, setForm] = useState(empty);
 
   const openNew = () => {
-    setForm({ ...empty, materialId: materials[0]?.id || "", supplierId: suppliers[0]?.id || "" });
+    const firstMaterial = materials[0];
+    setForm({ ...empty, materialId: firstMaterial?.id || "", supplierId: suppliers[0]?.id || "", brand: firstMaterial?.brand || "" });
     setFormError("");
     setOpen(true);
+  };
+
+  const selectMaterial = (materialId) => {
+    const material = materials.find((m) => m.id === materialId);
+    setForm({ ...form, materialId, brand: material?.brand || "" });
   };
 
   const save = async () => {
@@ -54,6 +60,11 @@ export default function EntradaTab() {
     setSaving(true);
     setFormError("");
     try {
+      const material = matOf(form.materialId);
+      const newBrand = form.brand.trim();
+      if (newBrand !== (material?.brand || "")) {
+        await apiFetch(`/materials/${form.materialId}`, { method: "PATCH", body: JSON.stringify({ brand: newBrand || undefined }) });
+      }
       await apiFetch("/stock/entries", {
         method: "POST",
         body: JSON.stringify({
@@ -125,16 +136,15 @@ export default function EntradaTab() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Field label="Material">
-                <select value={form.materialId} onChange={(e) => setForm({ ...form, materialId: e.target.value })}>
+                <select value={form.materialId} onChange={(e) => selectMaterial(e.target.value)}>
                   {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
               </Field>
               <Field label="Marca">
                 <input
-                  value={matOf(form.materialId)?.brand || ""}
+                  value={form.brand}
+                  onChange={(e) => setForm({ ...form, brand: e.target.value })}
                   placeholder="Marca não informada"
-                  readOnly
-                  style={{ background: "#F0F3F2", color: "var(--muted)" }}
                 />
               </Field>
             </div>
