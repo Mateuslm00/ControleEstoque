@@ -39,6 +39,9 @@ export default function MateriaisTab() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [filter, setFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [listNotice, setListNotice] = useState("");
@@ -113,7 +116,12 @@ export default function MateriaisTab() {
     }
   };
 
-  const filtered = materials.filter((m) => m.name.toLowerCase().includes(filter.toLowerCase()));
+  const filtered = materials.filter((m) =>
+    m.name.toLowerCase().includes(filter.toLowerCase()) &&
+    (!typeFilter || m.type === typeFilter) &&
+    (!groupFilter || m.group === groupFilter) &&
+    (!statusFilter || (statusFilter === "active" ? m.active : !m.active))
+  );
 
   return (
     <div>
@@ -123,11 +131,24 @@ export default function MateriaisTab() {
         action={<button onClick={openNew} className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold flex items-center gap-2"><Plus size={16} />Novo material</button>}
       />
 
-      <div className="px-4 sm:px-8 mb-4">
-        <div className="relative max-w-sm">
+      <div className="px-4 sm:px-8 mb-4 flex flex-wrap gap-3 items-center">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--muted)" }} />
           <input className="pl-9" placeholder="Buscar material..." value={filter} onChange={(e) => setFilter(e.target.value)} />
         </div>
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-auto">
+          <option value="">Todos os tipos</option>
+          {types.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="w-auto">
+          <option value="">Todos os grupos</option>
+          {groups.map((g) => <option key={g} value={g}>{g}</option>)}
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-auto">
+          <option value="">Ativos e inativos</option>
+          <option value="active">Somente ativos</option>
+          <option value="inactive">Somente inativos</option>
+        </select>
       </div>
 
       <div className="px-4 sm:px-8 pb-8">
