@@ -155,9 +155,6 @@ export default function MateriaisTab() {
           <Field label="Nome do material">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Luva de Procedimento M" />
           </Field>
-          <Field label="Marca">
-            <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} placeholder="Ex: Descarpack" />
-          </Field>
           <Field label="SKU (código único)">
             <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ex: LUV-M-001" disabled={!!editing} />
           </Field>
