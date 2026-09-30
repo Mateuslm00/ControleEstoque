@@ -26,10 +26,11 @@ const MEASURE_UNITS = ["un", "cx", "pct", "kg", "l", "par", "rolo"];
  * próprio `type`/`group`, e a lista de sugestões nos selects é montada a
  * partir dos valores já usados nos materiais carregados.
  *
- * PONTOS DE ATENÇÃO (mantidos como no sistema original):
- *  - Excluir (Trash2) não existe mais aqui: o backend não expõe DELETE de
- *    material (só ativar/desativar via PATCH), para não perder histórico
- *    de entradas/vendas já vinculadas a ele.
+ * PONTOS DE ATENÇÃO:
+ *  - O botão de lixeira exclui de verdade (DELETE /materials/:id). O
+ *    backend só apaga se o material não tiver entradas, lotes, vendas ou
+ *    cotações vinculadas (senão devolve 409) — nesse caso cai automatico
+ *    para desativar (PATCH active:false), preservando o histórico.
  * -----------------------------------------------------------------------
  */
 export default function MateriaisTab() {
@@ -40,6 +41,7 @@ export default function MateriaisTab() {
   const [filter, setFilter] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [listNotice, setListNotice] = useState("");
 
   const types = [...new Set(materials.map((m) => m.type).filter(Boolean))];
   const groups = [...new Set(materials.map((m) => m.group).filter(Boolean))];
@@ -95,6 +97,22 @@ export default function MateriaisTab() {
     reload();
   };
 
+  const deleteMaterial = async (m) => {
+    setListNotice("");
+    try {
+      await apiFetch(`/materials/${m.id}`, { method: "DELETE" });
+      reload();
+    } catch (err) {
+      if (err.status === 409) {
+        await apiFetch(`/materials/${m.id}`, { method: "PATCH", body: JSON.stringify({ active: false }) });
+        setListNotice(`"${m.name}" tem histórico vinculado (entradas, lotes, vendas ou cotações) e não pode ser excluído — foi desativado.`);
+        reload();
+      } else {
+        setListNotice(err.message || "Não foi possível excluir o material.");
+      }
+    }
+  };
+
   const filtered = materials.filter((m) => m.name.toLowerCase().includes(filter.toLowerCase()));
 
   return (
@@ -115,6 +133,7 @@ export default function MateriaisTab() {
       <div className="px-4 sm:px-8 pb-8">
         <div className="card overflow-hidden">
           {error && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{error}</div>}
+          {listNotice && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{listNotice}</div>}
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando materiais...</div>
           ) : filtered.length === 0 ? <EmptyState text="Nenhum material cadastrado." /> : (
@@ -137,9 +156,19 @@ export default function MateriaisTab() {
                     </td>
                     <td className="text-right">
                       <button onClick={() => openEdit(m)} className="p-1.5 rounded hover:bg-black/5 mr-1"><Edit3 size={14} /></button>
-                      <button onClick={() => toggleActive(m)} className="p-1.5 rounded hover:bg-black/5" style={{ color: "var(--danger)" }} title={m.active ? "Desativar" : "Ativar"}>
+                      <button onClick={() => deleteMaterial(m)} className="p-1.5 rounded hover:bg-black/5" style={{ color: "var(--danger)" }} title="Excluir">
                         <Trash2 size={14} />
                       </button>
+                      {m.active && (
+                        <button onClick={() => toggleActive(m)} className="p-1.5 rounded hover:bg-black/5 ml-1" title="Desativar">
+                          <span className="text-xs">Desativar</span>
+                        </button>
+                      )}
+                      {!m.active && (
+                        <button onClick={() => toggleActive(m)} className="p-1.5 rounded hover:bg-black/5 ml-1" style={{ color: "var(--primary)" }} title="Ativar">
+                          <span className="text-xs">Ativar</span>
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

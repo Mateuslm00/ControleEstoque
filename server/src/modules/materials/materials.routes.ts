@@ -96,4 +96,32 @@ export const materialsRoutes: FastifyPluginAsync = async (app) => {
 
     return reply.send({ material });
   });
+
+  app.delete("/materials/:id", writeGuard, async (request, reply) => {
+    const params = z.object({ id: z.string().uuid() }).parse(request.params);
+
+    const material = await prisma.material.findUnique({ where: { id: params.id } });
+    if (!material) throw Errors.notFound("Material nao encontrado");
+
+    const [entryCount, lotCount, saleCount, quoteCount] = await Promise.all([
+      prisma.stockEntryItem.count({ where: { materialId: params.id } }),
+      prisma.stockLot.count({ where: { materialId: params.id } }),
+      prisma.saleItem.count({ where: { materialId: params.id } }),
+      prisma.quote.count({ where: { materialId: params.id } }),
+    ]);
+    if (entryCount || lotCount || saleCount || quoteCount) {
+      throw Errors.conflict(
+        "Este material tem entradas, lotes, vendas ou cotacoes vinculadas e nao pode ser excluido. Desative-o em vez de excluir."
+      );
+    }
+
+    await prisma.material.delete({ where: { id: params.id } });
+
+    await recordAudit(
+      { actorUserId: request.currentUser!.id, ip: request.ip, userAgent: request.headers["user-agent"] },
+      { action: "MATERIAL_DELETED", entityType: "material", entityId: material.id, before: material }
+    );
+
+    return reply.code(204).send();
+  });
 };
