@@ -25,7 +25,10 @@ export function useCollection(path) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    // Só mostra o "Carregando..." na primeira busca — um reload() após
+    // salvar/editar/desativar troca os dados quando chegam, sem apagar
+    // a tabela da tela no meio do caminho.
+    if (reloadTick === 0) setLoading(true);
     setError("");
 
     const withPage = (page) => `${path}${path.includes("?") ? "&" : "?"}page=${page}`;
