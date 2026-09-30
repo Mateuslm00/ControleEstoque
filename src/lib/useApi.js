@@ -27,9 +27,24 @@ export function useCollection(path) {
     let cancelled = false;
     setLoading(true);
     setError("");
-    apiFetch(path)
-      .then((data) => {
-        if (!cancelled) setItems(data.items || []);
+
+    const withPage = (page) => `${path}${path.includes("?") ? "&" : "?"}page=${page}`;
+
+    const fetchAll = async () => {
+      let page = 1;
+      let all = [];
+      for (;;) {
+        const data = await apiFetch(withPage(page));
+        all = all.concat(data.items || []);
+        if (!data.items?.length || all.length >= (data.total ?? all.length)) break;
+        page += 1;
+      }
+      return all;
+    };
+
+    fetchAll()
+      .then((all) => {
+        if (!cancelled) setItems(all);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || "Erro ao carregar dados");
