@@ -11,7 +11,7 @@ const SORT_ALLOWLIST = ["name", "sku", "createdAt", "minStock"] as const;
 const createSchema = z.object({
   name: z.string().min(1).max(160),
   brand: z.string().max(120).optional(),
-  sku: z.string().min(1).max(60),
+  sku: z.string().trim().min(1).max(60),
   unit: z.string().min(1).max(20),
   type: z.string().max(80).optional(),
   group: z.string().max(80).optional(),
@@ -20,6 +20,9 @@ const createSchema = z.object({
 });
 
 const updateSchema = createSchema.partial().extend({
+  brand: z.string().max(120).nullable().optional(),
+  type: z.string().max(80).nullable().optional(),
+  group: z.string().max(80).nullable().optional(),
   active: z.boolean().optional(),
 });
 
@@ -86,6 +89,11 @@ export const materialsRoutes: FastifyPluginAsync = async (app) => {
 
     const before = await prisma.material.findUnique({ where: { id: params.id } });
     if (!before) throw Errors.notFound("Material nao encontrado");
+
+    if (parsed.data.sku && parsed.data.sku !== before.sku) {
+      const clash = await prisma.material.findUnique({ where: { sku: parsed.data.sku } });
+      if (clash && clash.id !== params.id) throw Errors.conflict("SKU ja cadastrado");
+    }
 
     const material = await prisma.material.update({ where: { id: params.id }, data: parsed.data });
 

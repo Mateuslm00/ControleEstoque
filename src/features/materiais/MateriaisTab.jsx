@@ -73,11 +73,11 @@ export default function MateriaisTab() {
     try {
       const payload = {
         name: form.name.trim(),
-        brand: form.brand.trim() || undefined,
+        brand: form.brand.trim() || (editing ? null : undefined),
         sku: form.sku.trim(),
         unit: form.unit,
-        type: form.type || undefined,
-        group: form.group || undefined,
+        type: form.type.trim() || (editing ? null : undefined),
+        group: form.group.trim() || (editing ? null : undefined),
         markup: Number(form.markup),
         minStock: Number(form.minStock),
       };
@@ -206,7 +206,7 @@ export default function MateriaisTab() {
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Luva de Procedimento M" />
           </Field>
           <Field label="SKU (código único)">
-            <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ex: LUV-M-001" disabled={!!editing} />
+            <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ex: LUV-M-001" />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Tipo">
