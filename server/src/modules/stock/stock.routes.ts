@@ -20,6 +20,7 @@ const createEntrySchema = z.object({
   supplierId: z.string().uuid(),
   invoiceNumber: z.string().min(1).max(60),
   entryDate: z.coerce.date(),
+  receivingUnit: z.string().trim().max(120).nullish().transform((v) => v || null),
   items: z.array(entryItemSchema).min(1),
 });
 

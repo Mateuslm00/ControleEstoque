@@ -144,6 +144,7 @@ model StockEntry {
   invoiceNumber String   @map("invoice_number")
   entryDate     DateTime @map("entry_date")
   totalValue    Decimal  @map("total_value") @db.Decimal(14, 2)
+  receivingUnit String?  @map("receiving_unit")
   createdById   String   @map("created_by")
   createdAt     DateTime @default(now()) @map("created_at")
 

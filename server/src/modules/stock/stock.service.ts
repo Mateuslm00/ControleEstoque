@@ -14,6 +14,7 @@ export async function createStockEntry(params: {
   supplierId: string;
   invoiceNumber: string;
   entryDate: Date;
+  receivingUnit?: string | null;
   createdById: string;
   items: EntryItemInput[];
 }) {
@@ -35,6 +36,7 @@ export async function createStockEntry(params: {
         supplierId: params.supplierId,
         invoiceNumber: params.invoiceNumber,
         entryDate: params.entryDate,
+        receivingUnit: params.receivingUnit ?? null,
         totalValue,
         createdById: params.createdById,
       },
@@ -192,7 +194,7 @@ async function entryHasConsumption(tx: Prisma.TransactionClient, entryId: string
  */
 export async function updateStockEntry(
   entryId: string,
-  params: { supplierId: string; invoiceNumber: string; entryDate: Date; items: EntryItemInput[] }
+  params: { supplierId: string; invoiceNumber: string; entryDate: Date; receivingUnit?: string | null; items: EntryItemInput[] }
 ) {
   return prisma.$transaction(async (tx) => {
     const current = await tx.stockEntry.findUnique({
@@ -232,7 +234,12 @@ export async function updateStockEntry(
       });
       return tx.stockEntry.update({
         where: { id: entryId },
-        data: { supplierId: params.supplierId, invoiceNumber: params.invoiceNumber, entryDate: params.entryDate },
+        data: {
+          supplierId: params.supplierId,
+          invoiceNumber: params.invoiceNumber,
+          entryDate: params.entryDate,
+          receivingUnit: params.receivingUnit ?? null,
+        },
       });
     }
 
@@ -281,6 +288,7 @@ export async function updateStockEntry(
         supplierId: params.supplierId,
         invoiceNumber: params.invoiceNumber,
         entryDate: params.entryDate,
+        receivingUnit: params.receivingUnit ?? null,
         totalValue,
       },
     });

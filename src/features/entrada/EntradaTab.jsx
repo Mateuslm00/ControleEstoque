@@ -28,6 +28,7 @@ import { DISTRIMEDICAL_UNIT } from "../../data/constants.js";
 export default function EntradaTab() {
   const { items: materials } = useCollection("/materials?pageSize=200&active=true");
   const { items: suppliers } = useCollection("/suppliers?pageSize=200&active=true");
+  const { items: clients } = useCollection("/clients?pageSize=200&active=true");
   const { items: entries, loading, error, reload } = useCollection("/reports/stock-entries?pageSize=50");
 
   const [open, setOpen] = useState(false);
@@ -38,7 +39,7 @@ export default function EntradaTab() {
 
   const empty = {
     materialId: "", supplierId: "", quantity: 1, lotNumber: "",
-    expiresAt: "", unitCost: "", invoiceNumber: "", entryDate: todayISO(), brand: "",
+    expiresAt: "", unitCost: "", invoiceNumber: "", entryDate: todayISO(), brand: "", receivingUnit: DISTRIMEDICAL_UNIT,
   };
   const [form, setForm] = useState(empty);
 
@@ -62,6 +63,7 @@ export default function EntradaTab() {
       invoiceNumber: e.invoiceNumber,
       entryDate: String(e.entryDate).slice(0, 10),
       brand: it?.material?.brand || "",
+      receivingUnit: e.receivingUnit || DISTRIMEDICAL_UNIT,
     });
     setEditing(e);
     setFormError("");
@@ -108,6 +110,7 @@ export default function EntradaTab() {
         supplierId: form.supplierId,
         invoiceNumber: form.invoiceNumber,
         entryDate: form.entryDate,
+        receivingUnit: form.receivingUnit.trim() || DISTRIMEDICAL_UNIT,
         items: [{
           materialId: form.materialId,
           lotNumber: form.lotNumber,
@@ -144,7 +147,7 @@ export default function EntradaTab() {
 
       <div className="px-4 sm:px-8 mb-4">
         <span className="text-xs font-semibold px-3 py-1.5 rounded-full inline-flex items-center gap-1.5" style={{ background: "#EAF3F1", color: "var(--primary-dark)" }}>
-          <Building2 size={13} /> Toda entrada é recebida em: <b className="mono">{DISTRIMEDICAL_UNIT}</b>
+          <Building2 size={13} /> Unidade padrão de recebimento: <b className="mono">{DISTRIMEDICAL_UNIT}</b>
         </span>
       </div>
 
@@ -156,12 +159,13 @@ export default function EntradaTab() {
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando entradas...</div>
           ) : entries.length === 0 ? <EmptyState text="Nenhuma entrada registrada." /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[28rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
-              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>NFe</th><th>Materiais</th><th>Marca</th><th>Valor total</th><th></th></tr></thead>
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>Unidade</th><th>NFe</th><th>Materiais</th><th>Marca</th><th>Valor total</th><th></th></tr></thead>
               <tbody>
                 {entries.map((e) => (
                   <tr key={e.id}>
                     <td className="text-sm">{brDate(e.entryDate)}</td>
                     <td className="text-sm">{e.supplier?.name}</td>
+                    <td className="text-sm">{e.receivingUnit || DISTRIMEDICAL_UNIT}</td>
                     <td className="text-sm mono">{e.invoiceNumber}</td>
                     <td className="text-sm">{e.items?.map((it) => it.material?.name).join(", ")}</td>
                     <td className="text-sm">{e.items?.map((it) => it.material?.brand || "-").join(", ")}</td>
@@ -207,7 +211,11 @@ export default function EntradaTab() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Unidade que recebeu">
-              <input value={DISTRIMEDICAL_UNIT} disabled style={{ background: "#F0F3F2", color: "var(--muted)", fontWeight: 600 }} />
+              <input list="receiving-units" value={form.receivingUnit} onChange={(e) => setForm({ ...form, receivingUnit: e.target.value })} placeholder={DISTRIMEDICAL_UNIT} />
+              <datalist id="receiving-units">
+                <option value={DISTRIMEDICAL_UNIT} />
+                {clients.map((c) => <option key={c.id} value={c.name} />)}
+              </datalist>
             </Field>
             <Field label="Data da entrada">
               <input type="date" value={form.entryDate} onChange={(e) => setForm({ ...form, entryDate: e.target.value })} />

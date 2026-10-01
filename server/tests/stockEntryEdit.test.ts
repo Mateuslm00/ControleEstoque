@@ -83,3 +83,28 @@ describe("editar e excluir entrada de estoque", () => {
     expect(await prisma.stockEntryItem.count()).toBe(0);
   });
 });
+
+describe("unidade que recebeu", () => {
+  it("persiste e permite editar a unidade de recebimento", async () => {
+    const app = await makeApp();
+    await resetDb();
+    const supplier = await prisma.supplier.create({ data: { name: "F" } });
+    const material = await prisma.material.create({ data: { name: "M", sku: "M-9", unit: "un" } });
+    await createUser({ email: "op@teste.com", password: "SenhaForte12345", role: "OPERACIONAL" });
+    const cookie = await loginAndGetCookie(app, "op@teste.com", "SenhaForte12345");
+    const { token, cookie: full } = await getCsrfToken(app, cookie);
+    const headers = { cookie: full, "x-csrf-token": token };
+    const payload = (receivingUnit?: string) => ({
+      supplierId: supplier.id, invoiceNumber: "NF", entryDate: "2026-01-01", receivingUnit,
+      items: [{ materialId: material.id, lotNumber: "L", expiresAt: "2027-01-01", quantity: 1, unitCost: 1 }],
+    });
+    const created = await app.inject({ method: "POST", url: "/stock/entries", headers, payload: payload("Unidade A") });
+    expect(created.statusCode).toBe(201);
+    const id = JSON.parse(created.body).entry.id;
+    expect((await prisma.stockEntry.findUniqueOrThrow({ where: { id } })).receivingUnit).toBe("Unidade A");
+    const upd = await app.inject({ method: "PATCH", url: `/stock/entries/${id}`, headers, payload: payload("Unidade B") });
+    expect(upd.statusCode).toBe(200);
+    expect((await prisma.stockEntry.findUniqueOrThrow({ where: { id } })).receivingUnit).toBe("Unidade B");
+    await app.close();
+  });
+});
