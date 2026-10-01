@@ -16,11 +16,13 @@
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
 /** Data de hoje no formato ISO (YYYY-MM-DD).
- *  Atenção: toISOString() converte para UTC, então perto da meia-noite,
- *  dependendo do fuso do navegador, pode retornar a data de "ontem" ou
- *  "amanhã" em relação ao horário local (comportamento herdado do
- *  sistema original, mantido de propósito). */
-export const todayISO = () => new Date().toISOString().slice(0, 10);
+ *  Usa a data LOCAL do navegador (não UTC), para não virar "amanhã" depois
+ *  das 21h no Brasil. */
+export const todayISO = () => {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 
 /** Converte uma data ISO (YYYY-MM-DD ou um datetime ISO completo, como o
  *  backend retorna) para o formato brasileiro DD/MM/AAAA. */

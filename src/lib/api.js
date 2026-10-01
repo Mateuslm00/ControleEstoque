@@ -60,7 +60,8 @@ export async function apiFetch(path, options = {}) {
   // Token CSRF expirado/invalido: busca um novo e tenta so mais uma vez.
   if (res.status === 403 && MUTATING_METHODS.has(method)) {
     const body = await res.clone().json().catch(() => null);
-    if (body?.code === "FST_CSRF_INVALID_TOKEN" || body?.code === "FST_CSRF_MISSING_SECRET") {
+    const csrfCode = body?.error?.code || body?.code;
+    if (csrfCode === "FST_CSRF_INVALID_TOKEN" || csrfCode === "FST_CSRF_MISSING_SECRET") {
       await fetchCsrfToken();
       headers["x-csrf-token"] = cachedCsrfToken;
       res = await fetch(`${API_BASE_URL}${path}`, {
@@ -75,6 +76,11 @@ export async function apiFetch(path, options = {}) {
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     const message = body?.error?.message || body?.message || "Erro inesperado ao falar com o servidor";
+    // Sessao expirou/foi revogada no meio do uso: avisa o App para voltar ao login.
+    // (login e /auth/me tratam o proprio 401.)
+    if (res.status === 401 && path !== "/auth/login" && path !== "/auth/me") {
+      window.dispatchEvent(new Event("auth:expired"));
+    }
     const err = new Error(message);
     err.status = res.status;
     err.code = body?.error?.code;

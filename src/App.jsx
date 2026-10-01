@@ -52,6 +52,13 @@ export default function App() {
       .finally(() => setCheckingSession(false));
   }, []);
 
+  // Qualquer chamada da API que receber 401 (sessao expirada/revogada) volta ao login.
+  useEffect(() => {
+    const onExpired = () => setCurrentUser(null);
+    window.addEventListener("auth:expired", onExpired);
+    return () => window.removeEventListener("auth:expired", onExpired);
+  }, []);
+
   const handleLogin = async (identifier, password, rememberMe) => {
     const data = await authApi.login(identifier, password, rememberMe);
     setCurrentUser(data.user);

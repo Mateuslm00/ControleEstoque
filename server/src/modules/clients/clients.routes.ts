@@ -15,7 +15,12 @@ const createSchema = z.object({
   address: z.string().max(300).optional(),
 });
 
-const updateSchema = createSchema.partial().extend({ active: z.boolean().optional() });
+const updateSchema = createSchema.partial().extend({
+  cnpj: z.string().max(20).nullable().optional(),
+  email: z.string().email().nullable().optional(),
+  address: z.string().max(300).nullable().optional(),
+  active: z.boolean().optional(),
+});
 
 export const clientsRoutes: FastifyPluginAsync = async (app) => {
   const writeGuard = { preHandler: requireRole("ADMIN", "OPERACIONAL") };

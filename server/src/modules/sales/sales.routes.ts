@@ -123,7 +123,7 @@ export const salesRoutes: FastifyPluginAsync = async (app) => {
       },
     });
 
-    const fmtPeriodo = (d: Date | undefined) => (d ? d.toLocaleDateString("pt-BR") : null);
+    const fmtPeriodo = (d: Date | undefined) => (d ? d.toLocaleDateString("pt-BR", { timeZone: "UTC" }) : null);
     const periodoStr =
       fmtPeriodo(query.dateFrom) || fmtPeriodo(query.dateTo)
         ? `${fmtPeriodo(query.dateFrom) ?? "início"} a ${fmtPeriodo(query.dateTo) ?? "hoje"}`

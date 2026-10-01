@@ -39,6 +39,7 @@ export async function renderRomaneioHtml(saleId: string): Promise<string> {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "UTC",
   });
 
   return `<!doctype html>

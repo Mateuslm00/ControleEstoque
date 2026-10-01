@@ -96,9 +96,12 @@ export const stockRoutes: FastifyPluginAsync = async (app) => {
       })
       .parse(request.query);
 
+    const currentWhere = { status: "ACTIVE" as const, ...(query.materialId ? { materialId: query.materialId } : {}) };
+    const totalGroups = await prisma.stockLot.groupBy({ by: ["materialId"], where: currentWhere });
+
     const grouped = await prisma.stockLot.groupBy({
       by: ["materialId"],
-      where: { status: "ACTIVE", ...(query.materialId ? { materialId: query.materialId } : {}) },
+      where: currentWhere,
       _sum: { currentQuantity: true },
       orderBy: { materialId: "asc" },
       skip: (query.page - 1) * query.pageSize,
@@ -115,7 +118,7 @@ export const stockRoutes: FastifyPluginAsync = async (app) => {
       currentQuantity: g._sum.currentQuantity,
     }));
 
-    return reply.send({ items, page: query.page, pageSize: query.pageSize });
+    return reply.send({ items, total: totalGroups.length, page: query.page, pageSize: query.pageSize });
   });
 
   app.get("/stock/lots", readGuard, async (request, reply) => {

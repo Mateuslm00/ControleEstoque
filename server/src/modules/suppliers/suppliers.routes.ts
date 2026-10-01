@@ -20,7 +20,17 @@ const createSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
-const updateSchema = createSchema.partial().extend({ active: z.boolean().optional() });
+const updateSchema = createSchema.partial().extend({
+  cnpj: z.string().max(20).nullable().optional(),
+  email: z
+    .union([z.string().email(), z.literal("")])
+    .nullish()
+    .transform((v) => (v ? v : v === undefined ? undefined : null)),
+  phone: z.string().max(30).nullable().optional(),
+  contactPerson: z.string().max(120).nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  active: z.boolean().optional(),
+});
 
 export const suppliersRoutes: FastifyPluginAsync = async (app) => {
   const writeGuard = { preHandler: requireRole("ADMIN", "OPERACIONAL") };

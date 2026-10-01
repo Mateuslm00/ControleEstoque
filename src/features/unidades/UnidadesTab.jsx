@@ -40,7 +40,7 @@ export default function UnidadesTab() {
     setSaving(true);
     setFormError("");
     try {
-      const payload = { name: form.name.trim(), cnpj: form.cnpj || undefined };
+      const payload = { name: form.name.trim(), cnpj: form.cnpj.trim() || (editing ? null : undefined) };
       if (editing) {
         await apiFetch(`/clients/${editing}`, { method: "PATCH", body: JSON.stringify(payload) });
       } else {

@@ -49,6 +49,20 @@ export async function buildApp() {
       return reply.code(400).send({ error: { code: "VALIDATION_ERROR", message: "Parametros invalidos" } });
     }
 
+    // Violacao de unicidade do banco (ex.: numero de venda, CNPJ, SKU repetidos que
+    // escaparam da checagem previa) vira 409 em vez de 500.
+    if ((error as { code?: string }).code === "P2002") {
+      const target = String((error as { meta?: { target?: unknown } }).meta?.target ?? "");
+      const message = target.includes("doc_number")
+        ? "Ja existe uma venda com esse numero"
+        : target.includes("cnpj")
+          ? "Ja existe um cadastro com esse CNPJ"
+          : target.includes("sku")
+            ? "SKU ja cadastrado"
+            : "Ja existe um registro com esses dados";
+      return reply.code(409).send({ error: { code: "CONFLICT", message } });
+    }
+
     if (error.validation) {
       return reply.code(400).send({ error: { code: "VALIDATION_ERROR", message: "Dados invalidos" } });
     }

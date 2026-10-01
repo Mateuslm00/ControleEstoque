@@ -48,6 +48,16 @@ function toPublicUser(u: {
   // password_hash nunca incluido aqui de proposito.
 }
 
+/** Impede que o sistema fique sem nenhum ADMIN ativo. */
+async function assertNotLastActiveAdmin(userId: string) {
+  const otherActiveAdmins = await prisma.user.count({
+    where: { role: "ADMIN", status: "ACTIVE", id: { not: userId } },
+  });
+  if (otherActiveAdmins === 0) {
+    throw Errors.conflict("Este e o unico administrador ativo. Crie outro administrador antes de desativar ou rebaixar este.");
+  }
+}
+
 export const usersRoutes: FastifyPluginAsync = async (app) => {
   const adminOnly = { preHandler: requireRole("ADMIN") };
 
@@ -118,6 +128,9 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const roleChanged = parsed.data.role && parsed.data.role !== before.role;
+    if (roleChanged && before.role === "ADMIN" && before.status === "ACTIVE") {
+      await assertNotLastActiveAdmin(before.id);
+    }
 
     const user = await prisma.user.update({
       where: { id: params.id },
@@ -149,6 +162,15 @@ export const usersRoutes: FastifyPluginAsync = async (app) => {
 
     const before = await prisma.user.findUnique({ where: { id: params.id } });
     if (!before) throw Errors.notFound("Usuario nao encontrado");
+
+    if (parsed.data.status === "INACTIVE") {
+      if (before.id === request.currentUser!.id) {
+        throw Errors.conflict("Voce nao pode desativar a propria conta");
+      }
+      if (before.role === "ADMIN" && before.status === "ACTIVE") {
+        await assertNotLastActiveAdmin(before.id);
+      }
+    }
 
     const user = await prisma.user.update({
       where: { id: params.id },

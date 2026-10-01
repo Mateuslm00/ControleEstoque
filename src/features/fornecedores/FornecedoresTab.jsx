@@ -49,11 +49,11 @@ export default function FornecedoresTab() {
     try {
       const payload = {
         name: form.name.trim(),
-        cnpj: form.cnpj || undefined,
-        phone: form.phone || undefined,
-        contactPerson: form.contactPerson || undefined,
-        email: form.email || undefined,
-        notes: form.notes || undefined,
+        cnpj: form.cnpj.trim() || (editing ? null : undefined),
+        phone: form.phone.trim() || (editing ? null : undefined),
+        contactPerson: form.contactPerson.trim() || (editing ? null : undefined),
+        email: form.email.trim() || (editing ? null : undefined),
+        notes: form.notes.trim() || (editing ? null : undefined),
       };
       if (editing) {
         await apiFetch(`/suppliers/${editing}`, { method: "PATCH", body: JSON.stringify(payload) });
