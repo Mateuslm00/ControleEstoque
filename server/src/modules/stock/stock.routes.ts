@@ -4,7 +4,7 @@ import { prisma } from "../../db/prisma.js";
 import { Errors } from "../../shared/errors/AppError.js";
 import { requireAuth, requireRole } from "../auth/auth.plugin.js";
 import { recordAudit } from "../audit/audit.service.js";
-import { createStockEntry } from "./stock.service.js";
+import { createStockEntry, updateStockEntry, deleteStockEntry } from "./stock.service.js";
 import { queueAndSendEmailJob } from "../email/email.service.js";
 import { env } from "../../config/env.js";
 
@@ -54,6 +54,36 @@ export const stockRoutes: FastifyPluginAsync = async (app) => {
     }
 
     return reply.code(201).send({ entry });
+  });
+
+  app.patch("/stock/entries/:id", writeGuard, async (request, reply) => {
+    const params = z.object({ id: z.string().uuid() }).parse(request.params);
+    const parsed = createEntrySchema.safeParse(request.body);
+    if (!parsed.success) throw Errors.badRequest("Dados de entrada de estoque invalidos");
+
+    const before = await prisma.stockEntry.findUnique({ where: { id: params.id }, include: { items: true } });
+    if (!before) throw Errors.notFound("Entrada nao encontrada");
+
+    const entry = await updateStockEntry(params.id, parsed.data);
+
+    await recordAudit(
+      { actorUserId: request.currentUser!.id, ip: request.ip, userAgent: request.headers["user-agent"] },
+      { action: "STOCK_ENTRY_UPDATED", entityType: "stock_entry", entityId: entry.id, before, after: entry }
+    );
+
+    return reply.send({ entry });
+  });
+
+  app.delete("/stock/entries/:id", writeGuard, async (request, reply) => {
+    const params = z.object({ id: z.string().uuid() }).parse(request.params);
+    const entry = await deleteStockEntry(params.id);
+
+    await recordAudit(
+      { actorUserId: request.currentUser!.id, ip: request.ip, userAgent: request.headers["user-agent"] },
+      { action: "STOCK_ENTRY_DELETED", entityType: "stock_entry", entityId: entry.id, before: entry }
+    );
+
+    return reply.code(204).send();
   });
 
   app.get("/stock/current", readGuard, async (request, reply) => {

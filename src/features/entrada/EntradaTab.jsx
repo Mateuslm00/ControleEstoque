@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Building2 } from "lucide-react";
+import { Plus, Building2, Edit3, Trash2 } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import EmptyState from "../../components/common/EmptyState.jsx";
 import Modal from "../../components/common/Modal.jsx";
@@ -33,6 +33,8 @@ export default function EntradaTab() {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+  const [editing, setEditing] = useState(null);
+  const [listNotice, setListNotice] = useState("");
 
   const empty = {
     materialId: "", supplierId: "", quantity: 1, lotNumber: "",
@@ -43,8 +45,37 @@ export default function EntradaTab() {
   const openNew = () => {
     const firstMaterial = materials[0];
     setForm({ ...empty, materialId: firstMaterial?.id || "", supplierId: suppliers[0]?.id || "", brand: firstMaterial?.brand || "" });
+    setEditing(null);
     setFormError("");
     setOpen(true);
+  };
+
+  const openEdit = (e) => {
+    const it = e.items?.[0];
+    setForm({
+      materialId: it?.materialId || "",
+      supplierId: e.supplierId,
+      quantity: Number(it?.quantity ?? 1),
+      lotNumber: it?.lotNumber || "",
+      expiresAt: it?.expiresAt ? String(it.expiresAt).slice(0, 10) : "",
+      unitCost: Number(it?.unitCost ?? 0),
+      invoiceNumber: e.invoiceNumber,
+      entryDate: String(e.entryDate).slice(0, 10),
+      brand: it?.material?.brand || "",
+    });
+    setEditing(e);
+    setFormError("");
+    setOpen(true);
+  };
+
+  const deleteEntry = async (e) => {
+    setListNotice("");
+    try {
+      await apiFetch(`/stock/entries/${e.id}`, { method: "DELETE" });
+      reload();
+    } catch (err) {
+      setListNotice(err.message || "Não foi possível excluir a entrada.");
+    }
   };
 
   const selectMaterial = (materialId) => {
@@ -63,23 +94,33 @@ export default function EntradaTab() {
       const material = matOf(form.materialId);
       const newBrand = form.brand.trim();
       if (newBrand !== (material?.brand || "")) {
-        await apiFetch(`/materials/${form.materialId}`, { method: "PATCH", body: JSON.stringify({ brand: newBrand || undefined }) });
+        await apiFetch(`/materials/${form.materialId}`, { method: "PATCH", body: JSON.stringify({ brand: newBrand || null }) });
       }
-      await apiFetch("/stock/entries", {
-        method: "POST",
-        body: JSON.stringify({
-          supplierId: form.supplierId,
-          invoiceNumber: form.invoiceNumber,
-          entryDate: form.entryDate,
-          items: [{
-            materialId: form.materialId,
-            lotNumber: form.lotNumber,
-            expiresAt: form.expiresAt,
-            quantity: Number(form.quantity),
-            unitCost: Number(form.unitCost),
-          }],
-        }),
+      // Entradas com mais de um item (só via API) preservam os demais itens ao editar o primeiro.
+      const otherItems = (editing?.items || []).slice(1).map((it) => ({
+        materialId: it.materialId,
+        lotNumber: it.lotNumber,
+        expiresAt: String(it.expiresAt).slice(0, 10),
+        quantity: Number(it.quantity),
+        unitCost: Number(it.unitCost),
+      }));
+      const body = JSON.stringify({
+        supplierId: form.supplierId,
+        invoiceNumber: form.invoiceNumber,
+        entryDate: form.entryDate,
+        items: [{
+          materialId: form.materialId,
+          lotNumber: form.lotNumber,
+          expiresAt: form.expiresAt,
+          quantity: Number(form.quantity),
+          unitCost: Number(form.unitCost),
+        }, ...otherItems],
       });
+      if (editing) {
+        await apiFetch(`/stock/entries/${editing.id}`, { method: "PATCH", body });
+      } else {
+        await apiFetch("/stock/entries", { method: "POST", body });
+      }
       setOpen(false);
       reload();
     } catch (err) {
@@ -89,7 +130,9 @@ export default function EntradaTab() {
     }
   };
 
-  const matOf = (id) => materials.find((m) => m.id === id);
+  const entryMaterial = editing?.items?.[0]?.material;
+  const materialOptions = entryMaterial && !materials.some((m) => m.id === entryMaterial.id) ? [entryMaterial, ...materials] : materials;
+  const matOf = (id) => materialOptions.find((m) => m.id === id);
 
   return (
     <div>
@@ -108,11 +151,12 @@ export default function EntradaTab() {
       <div className="px-4 sm:px-8 pb-8">
         <div className="card overflow-hidden">
           {error && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{error}</div>}
+          {listNotice && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{listNotice}</div>}
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando entradas...</div>
           ) : entries.length === 0 ? <EmptyState text="Nenhuma entrada registrada." /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[28rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
-              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>NFe</th><th>Materiais</th><th>Marca</th><th>Valor total</th></tr></thead>
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>NFe</th><th>Materiais</th><th>Marca</th><th>Valor total</th><th></th></tr></thead>
               <tbody>
                 {entries.map((e) => (
                   <tr key={e.id}>
@@ -122,6 +166,12 @@ export default function EntradaTab() {
                     <td className="text-sm">{e.items?.map((it) => it.material?.name).join(", ")}</td>
                     <td className="text-sm">{e.items?.map((it) => it.material?.brand || "-").join(", ")}</td>
                     <td className="text-sm mono">{e.totalValue !== undefined ? brl(e.totalValue) : "—"}</td>
+                    <td className="text-right">
+                      <button onClick={() => openEdit(e)} className="p-1.5 rounded hover:bg-black/5 mr-1" title="Editar"><Edit3 size={14} /></button>
+                      <button onClick={() => deleteEntry(e)} className="p-1.5 rounded hover:bg-black/5" style={{ color: "var(--danger)" }} title="Excluir">
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -131,13 +181,13 @@ export default function EntradaTab() {
       </div>
 
       {open && (
-        <Modal title="Nova entrada de estoque" onClose={() => setOpen(false)} wide>
+        <Modal title={editing ? "Editar entrada de estoque" : "Nova entrada de estoque"} onClose={() => setOpen(false)} wide>
           {formError && <div className="text-sm mb-2" style={{ color: "var(--danger)" }}>{formError}</div>}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Field label="Material">
                 <select value={form.materialId} onChange={(e) => selectMaterial(e.target.value)}>
-                  {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                  {materialOptions.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
               </Field>
               <Field label="Marca">
@@ -183,7 +233,7 @@ export default function EntradaTab() {
             <input value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} placeholder="Ex: 000.123.456" />
           </Field>
           <button onClick={save} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-2">
-            {saving ? "Registrando..." : "Registrar entrada"}
+            {saving ? "Salvando..." : editing ? "Salvar alterações" : "Registrar entrada"}
           </button>
         </Modal>
       )}
