@@ -116,4 +116,38 @@ describe("FEFO (First Expire, First Out)", () => {
     const body = JSON.parse(res.body);
     expect(body.sale.total).toBe("40");
   });
+
+  it("grava a observacao da venda e aceita venda sem observacao", async () => {
+    const { supplier, material, client } = await seedMaterialSupplierClient();
+    const user = await createUser({ email: "op@teste.com", password: "SenhaForte12345", role: "OPERACIONAL" });
+    await createStockEntry({
+      supplierId: supplier.id,
+      invoiceNumber: "NF-1",
+      entryDate: new Date("2026-01-01"),
+      createdById: user.id,
+      items: [{ materialId: material.id, lotNumber: "L1", expiresAt: new Date("2026-12-01"), quantity: 10, unitCost: 2 }],
+    });
+    const cookie = await loginAndGetCookie(app, "op@teste.com", "SenhaForte12345");
+    const { token, cookie: fullCookie } = await getCsrfToken(app, cookie);
+    const post = (docNumber: string, extra: object) =>
+      app.inject({
+        method: "POST",
+        url: "/sales",
+        headers: { cookie: fullCookie, "x-csrf-token": token },
+        payload: {
+          docNumber, clientId: client.id, saleDate: "2026-09-01",
+          items: [{ materialId: material.id, quantity: 1, unitPrice: 10 }], ...extra,
+        },
+      });
+
+    const withNotes = await post("V-N-1", { notes: "  retirado na sexta  " });
+    expect(withNotes.statusCode).toBe(201);
+    expect(JSON.parse(withNotes.body).sale.notes).toBe("retirado na sexta");
+
+    const without = await post("V-N-2", {});
+    expect(without.statusCode).toBe(201);
+    expect(JSON.parse(without.body).sale.notes).toBeNull();
+
+    expect((await post("V-N-3", { notes: "x".repeat(501) })).statusCode).toBe(400);
+  });
 });

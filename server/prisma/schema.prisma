@@ -208,6 +208,7 @@ model Sale {
   total          Decimal   @db.Decimal(14, 2)
   createdById    String    @map("created_by")
   recipientEmail String?   @map("recipient_email")
+  notes          String?
   emailStatus    EmailJobStatus @default(PENDING) @map("email_status")
   createdAt      DateTime  @default(now()) @map("created_at")
 

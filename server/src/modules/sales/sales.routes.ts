@@ -19,6 +19,7 @@ const createSaleSchema = z.object({
   docNumber: z.string().min(1).max(60),
   clientId: z.string().uuid(),
   saleDate: z.coerce.date(),
+  notes: z.string().trim().max(500).optional(),
   items: z.array(saleItemSchema).min(1),
 });
 

@@ -89,6 +89,7 @@ export async function createSaleWithFefo(params: {
   saleDate: Date;
   createdById: string;
   recipientEmail?: string;
+  notes?: string;
   items: SaleItemInput[];
 }) {
   return prisma.$transaction(async (tx) => {
@@ -104,6 +105,7 @@ export async function createSaleWithFefo(params: {
         total: 0,
         createdById: params.createdById,
         recipientEmail: params.recipientEmail,
+        notes: params.notes || null,
       },
     });
 

@@ -120,6 +120,7 @@ export default function SaidaTab() {
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState("");
   const [cart, setCart] = useState([]); // {id, materialId, quantity, unitPrice}
+  const [notes, setNotes] = useState("");
   const [viewingSale, setViewingSale] = useState(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -140,6 +141,7 @@ export default function SaidaTab() {
   const openNew = () => {
     setClientId(clients[0]?.id || "");
     setCart([]);
+    setNotes("");
     setItMaterialId(materials[0]?.id || "");
     setItQty(1);
     setItPrice("");
@@ -194,6 +196,7 @@ export default function SaidaTab() {
         docNumber: `V-${Date.now()}`,
         clientId,
         saleDate: todayISO(),
+        notes: notes.trim() || undefined,
         items: cart.map((c) => ({ materialId: c.materialId, quantity: c.quantity, unitPrice: c.unitPrice })),
       };
       const { sale } = await apiFetch("/sales", { method: "POST", body: JSON.stringify(payload) });
@@ -253,7 +256,7 @@ export default function SaidaTab() {
               <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: "60vh" }}>
                 <table className="w-full min-w-[640px]">
                   <thead className="sticky top-0" style={{ background: "var(--bg-card, #fff)" }}>
-                    <tr><th>Nº</th><th>Data</th><th>Cliente / Unidade</th><th>Valor da venda</th><th></th></tr>
+                    <tr><th>Nº</th><th>Data</th><th>Cliente / Unidade</th><th>Valor da venda</th><th>Observação</th><th></th></tr>
                   </thead>
                   <tbody>
                     {sales.map((s) => (
@@ -264,6 +267,7 @@ export default function SaidaTab() {
                         <td className="text-sm mono font-semibold" style={{ color: "var(--primary-dark)" }}>
                           {s.total !== undefined ? brl(s.total) : "—"}
                         </td>
+                        <td className="text-sm max-w-[16rem] truncate" title={s.notes || ""} style={{ color: "var(--muted)" }}>{s.notes || "—"}</td>
                         <td className="text-right">
                           <button onClick={() => setViewingSale(s)} className="btn-outline rounded-lg px-3 py-1.5 text-xs font-semibold flex items-center gap-1">
                             <Eye size={13} />Ver romaneio
@@ -359,6 +363,13 @@ export default function SaidaTab() {
               </div>
             </div>
           )}
+
+          <Field label="Observação (uso interno, não vai no romaneio)">
+            <textarea
+              rows={2} maxLength={500} value={notes} onChange={(e) => setNotes(e.target.value)}
+              placeholder="Ex: retirado por fulano, entregar na sexta..."
+            />
+          </Field>
 
           <button disabled={!canFinalize || saving} onClick={finalizeSale} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full disabled:opacity-40 flex items-center justify-center gap-2">
             <ClipboardList size={16} />{saving ? "Enviando..." : "Finalizar venda e gerar romaneio"}
