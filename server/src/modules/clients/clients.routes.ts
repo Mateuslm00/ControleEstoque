@@ -44,7 +44,7 @@ export const clientsRoutes: FastifyPluginAsync = async (app) => {
     const [items, total] = await Promise.all([
       prisma.client.findMany({
         where,
-        orderBy: { [sort]: direction },
+        orderBy: [{ [sort]: direction }, { id: "asc" as const }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),

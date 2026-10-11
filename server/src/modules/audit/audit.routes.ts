@@ -36,7 +36,7 @@ export const auditRoutes: FastifyPluginAsync = async (app) => {
     const [items, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: { actor: { select: { id: true, name: true, email: true } } },

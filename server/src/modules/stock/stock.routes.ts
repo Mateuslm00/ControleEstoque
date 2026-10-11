@@ -178,7 +178,7 @@ export const stockRoutes: FastifyPluginAsync = async (app) => {
     const [items, total] = await Promise.all([
       prisma.stockEntry.findMany({
         where,
-        orderBy: { entryDate: "desc" },
+        orderBy: [{ entryDate: "desc" }, { id: "asc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: {

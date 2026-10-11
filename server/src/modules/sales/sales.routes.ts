@@ -73,7 +73,7 @@ export const salesRoutes: FastifyPluginAsync = async (app) => {
     const [items, total] = await Promise.all([
       prisma.sale.findMany({
         where,
-        orderBy: { saleDate: "desc" },
+        orderBy: [{ saleDate: "desc" }, { id: "asc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: { client: true, createdBy: { select: { id: true, name: true } } },

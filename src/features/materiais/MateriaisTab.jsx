@@ -45,6 +45,11 @@ export default function MateriaisTab() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [listNotice, setListNotice] = useState("");
+  const [selected, setSelected] = useState(() => new Set());
+  const [bulkMarkup, setBulkMarkup] = useState("");
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkNotice, setBulkNotice] = useState("");
 
   const types = [...new Set(materials.map((m) => m.type).filter(Boolean))];
   const groups = [...new Set(materials.map((m) => m.group).filter(Boolean))];
@@ -123,6 +128,46 @@ export default function MateriaisTab() {
     (!statusFilter || (statusFilter === "active" ? m.active : !m.active))
   );
 
+  // Só conta como selecionado o que está visível com os filtros atuais.
+  const selectedVisible = filtered.filter((m) => selected.has(m.id));
+  const allSelected = filtered.length > 0 && selectedVisible.length === filtered.length;
+  const bulkValue = Number(bulkMarkup);
+  const bulkValid = bulkMarkup !== "" && Number.isFinite(bulkValue) && bulkValue >= 0 && bulkValue <= 1000;
+
+  const toggleOne = (id) => {
+    setBulkConfirm(false);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAll = () => {
+    setBulkConfirm(false);
+    setSelected(allSelected ? new Set() : new Set(filtered.map((m) => m.id)));
+  };
+
+  const applyBulkMarkup = async () => {
+    setBulkSaving(true);
+    setBulkNotice("");
+    try {
+      const res = await apiFetch("/materials/bulk-markup", {
+        method: "POST",
+        body: JSON.stringify({ ids: selectedVisible.map((m) => m.id), markup: bulkValue }),
+      });
+      setBulkNotice(`Markup padrão de ${res.updated} material(is) alterado para ${bulkValue}%.`);
+      setSelected(new Set());
+      setBulkMarkup("");
+      setBulkConfirm(false);
+      reload();
+    } catch (err) {
+      setBulkNotice(err.message || "Não foi possível reajustar o markup.");
+      setBulkConfirm(false);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -151,6 +196,46 @@ export default function MateriaisTab() {
         </select>
       </div>
 
+      {(selectedVisible.length > 0 || bulkNotice) && (
+        <div className="px-4 sm:px-8 mb-4">
+          <div className="card p-3 flex flex-wrap items-center gap-3 text-sm">
+            {selectedVisible.length > 0 && (
+              <>
+                <span className="font-medium">{selectedVisible.length} selecionado(s)</span>
+                <label className="flex items-center gap-2">
+                  Novo markup padrão (%)
+                  <input
+                    type="number" min="0" max="1000" step="0.5" className="w-24"
+                    value={bulkMarkup}
+                    onChange={(e) => { setBulkMarkup(e.target.value); setBulkConfirm(false); }}
+                  />
+                </label>
+                {!bulkConfirm ? (
+                  <button
+                    onClick={() => setBulkConfirm(true)} disabled={!bulkValid}
+                    className="btn-primary rounded-lg px-3 py-1.5 text-sm font-semibold"
+                  >
+                    Aplicar aos selecionados
+                  </button>
+                ) : (
+                  <>
+                    <span style={{ color: "var(--danger)" }}>
+                      Alterar o markup de {selectedVisible.length} material(is) para {bulkValue}%?
+                    </span>
+                    <button onClick={applyBulkMarkup} disabled={bulkSaving} className="btn-primary rounded-lg px-3 py-1.5 text-sm font-semibold">
+                      {bulkSaving ? "Aplicando..." : "Confirmar"}
+                    </button>
+                    <button onClick={() => setBulkConfirm(false)} disabled={bulkSaving} className="text-sm underline">Cancelar</button>
+                  </>
+                )}
+                <button onClick={() => { setSelected(new Set()); setBulkConfirm(false); }} className="text-sm underline ml-auto">Limpar seleção</button>
+              </>
+            )}
+            {bulkNotice && <span style={{ color: "var(--primary)" }}>{bulkNotice}</span>}
+          </div>
+        </div>
+      )}
+
       <div className="px-4 sm:px-8 pb-8">
         <div className="card overflow-hidden">
           {error && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{error}</div>}
@@ -159,10 +244,11 @@ export default function MateriaisTab() {
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando materiais...</div>
           ) : filtered.length === 0 ? <EmptyState text="Nenhum material cadastrado." /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[28rem] max-h-[40rem]"><table className="w-full min-w-[640px]">
-              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Material</th><th>Marca</th><th>SKU</th><th>Tipo</th><th>Grupo</th><th>Un. medida</th><th>Markup padrão</th><th>Status</th><th></th></tr></thead>
+              <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th className="w-8"><input type="checkbox" checked={allSelected} onChange={toggleAll} title="Selecionar todos (conforme filtros)" /></th><th>Material</th><th>Marca</th><th>SKU</th><th>Tipo</th><th>Grupo</th><th>Un. medida</th><th>Markup padrão</th><th>Status</th><th></th></tr></thead>
               <tbody>
                 {filtered.map((m) => (
                   <tr key={m.id}>
+                    <td><input type="checkbox" checked={selected.has(m.id)} onChange={() => toggleOne(m.id)} /></td>
                     <td className="text-sm font-medium">{m.name}</td>
                     <td className="text-sm">{m.brand || "-"}</td>
                     <td className="text-sm mono">{m.sku}</td>

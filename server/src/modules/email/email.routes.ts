@@ -21,7 +21,7 @@ export const emailRoutes: FastifyPluginAsync = async (app) => {
     const [items, total] = await Promise.all([
       prisma.emailJob.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),

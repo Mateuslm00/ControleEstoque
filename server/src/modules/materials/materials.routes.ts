@@ -55,7 +55,7 @@ export const materialsRoutes: FastifyPluginAsync = async (app) => {
     const [items, total] = await Promise.all([
       prisma.material.findMany({
         where,
-        orderBy: { [sort]: direction },
+        orderBy: [{ [sort]: direction }, { id: "asc" as const }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
       }),
@@ -103,6 +103,40 @@ export const materialsRoutes: FastifyPluginAsync = async (app) => {
     );
 
     return reply.send({ material });
+  });
+
+  // Reajuste em massa do markup padrao. Grava um unico registro de auditoria com
+  // o markup anterior de cada material, o que permite desfazer a operacao depois.
+  app.post("/materials/bulk-markup", writeGuard, async (request, reply) => {
+    const parsed = z
+      .object({
+        ids: z.array(z.string().uuid()).min(1).max(1000),
+        markup: z.coerce.number().min(0).max(1000),
+      })
+      .safeParse(request.body);
+    if (!parsed.success) throw Errors.badRequest("Dados invalidos para reajuste de markup");
+
+    const ids = [...new Set(parsed.data.ids)];
+    const before = await prisma.material.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, sku: true, name: true, markup: true },
+    });
+
+    const result = await prisma.material.updateMany({
+      where: { id: { in: before.map((m) => m.id) } },
+      data: { markup: parsed.data.markup },
+    });
+
+    await recordAudit(
+      { actorUserId: request.currentUser!.id, ip: request.ip, userAgent: request.headers["user-agent"] },
+      {
+        action: "MATERIAL_MARKUP_BULK_UPDATED",
+        entityType: "material",
+        metadata: { markup: parsed.data.markup, count: result.count, previous: before },
+      }
+    );
+
+    return reply.send({ updated: result.count, markup: parsed.data.markup });
   });
 
   app.delete("/materials/:id", writeGuard, async (request, reply) => {
