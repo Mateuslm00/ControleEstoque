@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Edit3, Trash2 } from "lucide-react";
+import { Plus, Search, Edit3, Trash2, X } from "lucide-react";
 import PageHeader from "../../components/common/PageHeader.jsx";
 import EmptyState from "../../components/common/EmptyState.jsx";
 import Modal from "../../components/common/Modal.jsx";
@@ -57,7 +57,20 @@ export default function MateriaisTab() {
   const empty = { name: "", brand: "", sku: "", type: "", group: "", unit: "un", markup: DEFAULT_MARKUP, minStock: 0 };
   const [form, setForm] = useState(empty);
 
-  const openNew = () => { setForm(empty); setEditing(null); setFormError(""); setOpen(true); };
+  const [rows, setRows] = useState(() => [{ ...empty, key: 1 }]);
+  const [nextKey, setNextKey] = useState(2);
+
+  const openNew = () => { setForm(empty); setRows([{ ...empty, key: 1 }]); setNextKey(2); setEditing(null); setFormError(""); setOpen(true); };
+  const updateRow = (key, patch) => setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  const removeRow = (key) => setRows((rs) => (rs.length > 1 ? rs.filter((r) => r.key !== key) : rs));
+  // A nova linha herda tipo/grupo/unidade/markup/mínimo da última, para agilizar lotes parecidos.
+  const addRow = () => {
+    setRows((rs) => {
+      const last = rs[rs.length - 1];
+      return [...rs, { ...empty, type: last.type, group: last.group, unit: last.unit, markup: last.markup, minStock: last.minStock, key: nextKey }];
+    });
+    setNextKey((k) => k + 1);
+  };
   const openEdit = (m) => {
     setForm({
       name: m.name, brand: m.brand || "", sku: m.sku, type: m.type || "", group: m.group || "",
@@ -66,6 +79,50 @@ export default function MateriaisTab() {
     setEditing(m.id);
     setFormError("");
     setOpen(true);
+  };
+
+  const rowPayload = (r) => ({
+    name: r.name.trim(),
+    brand: r.brand.trim() || undefined,
+    sku: r.sku.trim(),
+    unit: r.unit,
+    type: r.type.trim() || undefined,
+    group: r.group.trim() || undefined,
+    markup: Number(r.markup),
+    minStock: Number(r.minStock),
+  });
+
+  // Cadastro em lote: grava linha a linha; as que dão certo saem da lista e as
+  // que falham ficam com a mensagem de erro para correção.
+  const saveMany = async () => {
+    const filled = rows.filter((r) => r.name.trim() || r.sku.trim());
+    if (filled.length === 0) { setFormError("Preencha ao menos um material."); return; }
+    const incomplete = filled.find((r) => !r.name.trim() || !r.sku.trim());
+    if (incomplete) { setRows((rs) => rs.map((r) => (r === incomplete ? { ...r, error: "Nome e SKU são obrigatórios." } : r))); setFormError("Corrija as linhas destacadas."); return; }
+    const skus = filled.map((r) => r.sku.trim().toLowerCase());
+    if (new Set(skus).size !== skus.length) { setFormError("Há SKUs repetidos na lista."); return; }
+    setSaving(true);
+    setFormError("");
+    const failed = [];
+    let ok = 0;
+    for (const r of filled) {
+      try {
+        await apiFetch("/materials", { method: "POST", body: JSON.stringify(rowPayload(r)) });
+        ok++;
+      } catch (err) {
+        failed.push({ ...r, error: err.message || "Não foi possível salvar." });
+      }
+    }
+    setSaving(false);
+    reload();
+    if (failed.length === 0) {
+      setOpen(false);
+      setListNotice("");
+      setBulkNotice(`${ok} material(is) cadastrado(s).`);
+    } else {
+      setRows(failed);
+      setFormError(`${ok} cadastrado(s); ${failed.length} com erro — corrija e tente novamente.`);
+    }
   };
 
   const save = async () => {
@@ -286,8 +343,59 @@ export default function MateriaisTab() {
       </div>
 
       {open && (
-        <Modal title={editing ? "Editar material" : "Novo material"} onClose={() => setOpen(false)}>
+        <Modal title={editing ? "Editar material" : "Novo material"} onClose={() => setOpen(false)} wide={!editing}>
           {formError && <div className="text-sm mb-2" style={{ color: "var(--danger)" }}>{formError}</div>}
+          {!editing ? (
+            <>
+              <div className="space-y-3">
+                {rows.map((r, i) => (
+                  <div key={r.key} className="rounded-lg p-3" style={{ border: "1px solid var(--border, #d9dedc)" }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold" style={{ color: "var(--muted)" }}>Material {i + 1}</span>
+                      {rows.length > 1 && (
+                        <button onClick={() => removeRow(r.key)} className="p-1 rounded hover:bg-black/5" title="Remover linha"><X size={14} /></button>
+                      )}
+                    </div>
+                    {r.error && <div className="text-xs mb-2" style={{ color: "var(--danger)" }}>{r.error}</div>}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Field label="Nome do material">
+                        <input value={r.name} onChange={(e) => updateRow(r.key, { name: e.target.value, error: "" })} placeholder="Ex: Luva de Procedimento M" />
+                      </Field>
+                      <Field label="SKU (código único)">
+                        <input value={r.sku} onChange={(e) => updateRow(r.key, { sku: e.target.value, error: "" })} placeholder="Ex: LUV-M-001" />
+                      </Field>
+                      <Field label="Tipo">
+                        <input list="material-types" value={r.type} onChange={(e) => updateRow(r.key, { type: e.target.value })} placeholder="Ex: Enxoval" />
+                      </Field>
+                      <Field label="Grupo">
+                        <input list="material-groups" value={r.group} onChange={(e) => updateRow(r.key, { group: e.target.value })} placeholder="Ex: Ortopédico" />
+                      </Field>
+                      <Field label="Unidade de medida">
+                        <select value={r.unit} onChange={(e) => updateRow(r.key, { unit: e.target.value })}>
+                          {MEASURE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Markup padrão de venda (%)">
+                        <input type="number" min="0" step="0.5" value={r.markup} onChange={(e) => updateRow(r.key, { markup: e.target.value })} />
+                      </Field>
+                      <Field label="Estoque mínimo">
+                        <input type="number" min="0" step="1" value={r.minStock} onChange={(e) => updateRow(r.key, { minStock: e.target.value })} />
+                      </Field>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <datalist id="material-types">{types.map((t) => <option key={t} value={t} />)}</datalist>
+              <datalist id="material-groups">{groups.map((g) => <option key={g} value={g} />)}</datalist>
+              <button onClick={addRow} disabled={saving} className="text-sm font-semibold flex items-center gap-1 mt-3" style={{ color: "var(--primary)" }}>
+                <Plus size={14} />Adicionar outro material
+              </button>
+              <button onClick={saveMany} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-3">
+                {saving ? "Salvando..." : rows.length > 1 ? `Cadastrar ${rows.length} materiais` : "Cadastrar material"}
+              </button>
+            </>
+          ) : (
+          <>
           <Field label="Nome do material">
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Luva de Procedimento M" />
           </Field>
@@ -318,8 +426,10 @@ export default function MateriaisTab() {
             <input type="number" min="0" step="1" value={form.minStock} onChange={(e) => setForm({ ...form, minStock: e.target.value })} />
           </Field>
           <button onClick={save} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-2">
-            {saving ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar material"}
+            {saving ? "Salvando..." : "Salvar alterações"}
           </button>
+          </>
+          )}
         </Modal>
       )}
     </div>
