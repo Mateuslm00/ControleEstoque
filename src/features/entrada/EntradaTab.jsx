@@ -29,7 +29,13 @@ export default function EntradaTab() {
   const { items: materials } = useCollection("/materials?pageSize=200&active=true");
   const { items: suppliers } = useCollection("/suppliers?pageSize=200&active=true");
   const { items: clients } = useCollection("/clients?pageSize=200&active=true");
-  const { items: entries, loading, error, reload } = useCollection("/reports/stock-entries?pageSize=50");
+  const [filters, setFilters] = useState({ dateFrom: "", dateTo: "", supplierId: "" });
+  const entriesQuery = new URLSearchParams({ pageSize: "50" });
+  if (filters.dateFrom) entriesQuery.set("dateFrom", filters.dateFrom);
+  if (filters.dateTo) entriesQuery.set("dateTo", filters.dateTo);
+  if (filters.supplierId) entriesQuery.set("supplierId", filters.supplierId);
+  const { items: entries, loading, error, reload } = useCollection(`/reports/stock-entries?${entriesQuery}`);
+  const hasFilters = Boolean(filters.dateFrom || filters.dateTo || filters.supplierId);
 
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,34 +43,41 @@ export default function EntradaTab() {
   const [editing, setEditing] = useState(null);
   const [listNotice, setListNotice] = useState("");
 
-  const empty = {
-    materialId: "", supplierId: "", quantity: 1, lotNumber: "",
-    expiresAt: "", unitCost: "", invoiceNumber: "", entryDate: todayISO(), brand: "", receivingUnit: DISTRIMEDICAL_UNIT,
-  };
-  const [form, setForm] = useState(empty);
+  const emptyItem = { materialId: "", brand: "", lotNumber: "", expiresAt: "", quantity: 1, unitCost: "" };
+  const emptyHeader = { supplierId: "", invoiceNumber: "", entryDate: todayISO(), receivingUnit: DISTRIMEDICAL_UNIT };
+  const [header, setHeader] = useState(emptyHeader);
+  const [lines, setLines] = useState([]);
+  const [draft, setDraft] = useState(emptyItem);
 
   const openNew = () => {
     const firstMaterial = materials[0];
-    setForm({ ...empty, materialId: firstMaterial?.id || "", supplierId: suppliers[0]?.id || "", brand: firstMaterial?.brand || "" });
+    setHeader({ ...emptyHeader, supplierId: suppliers[0]?.id || "" });
+    setLines([]);
+    setDraft({ ...emptyItem, materialId: firstMaterial?.id || "", brand: firstMaterial?.brand || "" });
     setEditing(null);
     setFormError("");
     setOpen(true);
   };
 
   const openEdit = (e) => {
-    const it = e.items?.[0];
-    setForm({
-      materialId: it?.materialId || "",
+    setHeader({
       supplierId: e.supplierId,
-      quantity: Number(it?.quantity ?? 1),
-      lotNumber: it?.lotNumber || "",
-      expiresAt: it?.expiresAt ? String(it.expiresAt).slice(0, 10) : "",
-      unitCost: Number(it?.unitCost ?? 0),
       invoiceNumber: e.invoiceNumber,
       entryDate: String(e.entryDate).slice(0, 10),
-      brand: it?.material?.brand || "",
       receivingUnit: e.receivingUnit || DISTRIMEDICAL_UNIT,
     });
+    setLines((e.items || []).map((it) => ({
+      materialId: it.materialId,
+      materialName: it.material?.name || "",
+      unit: it.material?.unit || "un",
+      brand: it.material?.brand || "",
+      origBrand: it.material?.brand || "",
+      lotNumber: it.lotNumber || "",
+      expiresAt: it.expiresAt ? String(it.expiresAt).slice(0, 10) : "",
+      quantity: Number(it.quantity),
+      unitCost: Number(it.unitCost),
+    })));
+    setDraft({ ...emptyItem, materialId: e.items?.[0]?.materialId || materials[0]?.id || "" });
     setEditing(e);
     setFormError("");
     setOpen(true);
@@ -82,42 +95,80 @@ export default function EntradaTab() {
 
   const selectMaterial = (materialId) => {
     const material = materials.find((m) => m.id === materialId);
-    setForm({ ...form, materialId, brand: material?.brand || "" });
+    setDraft({ ...draft, materialId, brand: material?.brand || "" });
   };
 
+  const entryMaterials = (editing?.items || []).map((it) => it.material).filter(Boolean);
+  const materialOptions = [...entryMaterials.filter((em) => !materials.some((m) => m.id === em.id)), ...materials];
+  const matOf = (id) => materialOptions.find((m) => m.id === id);
+
+  const addLine = () => {
+    const d = draft;
+    if (!d.materialId || !d.lotNumber.trim() || !d.expiresAt || !(Number(d.quantity) > 0) || d.unitCost === "") {
+      setFormError("Preencha material, lote, validade, quantidade e custo do item antes de adicionar.");
+      return;
+    }
+    if (lines.some((l) => l.materialId === d.materialId && l.lotNumber.trim() === d.lotNumber.trim())) {
+      setFormError("Este material já foi adicionado com o mesmo lote nesta nota.");
+      return;
+    }
+    const m = matOf(d.materialId);
+    setLines([...lines, {
+      materialId: d.materialId,
+      materialName: m?.name || "",
+      unit: m?.unit || "un",
+      brand: d.brand,
+      origBrand: m?.brand || "",
+      lotNumber: d.lotNumber.trim(),
+      expiresAt: d.expiresAt,
+      quantity: Number(d.quantity),
+      unitCost: Number(d.unitCost),
+    }]);
+    setDraft({ ...emptyItem, materialId: d.materialId, brand: d.brand });
+    setFormError("");
+  };
+
+  const removeLine = (i) => setLines(lines.filter((_, idx) => idx !== i));
+  const editLine = (i) => {
+    const l = lines[i];
+    setDraft({ materialId: l.materialId, brand: l.brand, lotNumber: l.lotNumber, expiresAt: l.expiresAt, quantity: l.quantity, unitCost: l.unitCost });
+    removeLine(i);
+  };
+
+  const total = lines.reduce((sum, l) => sum + l.quantity * l.unitCost, 0);
+
   const save = async () => {
-    if (!form.materialId || !form.supplierId || !form.quantity || !form.unitCost || !form.lotNumber || !form.expiresAt || !form.invoiceNumber) {
-      setFormError("Preencha material, fornecedor, lote, quantidade, validade, custo e NFe.");
+    if (!header.supplierId || !header.invoiceNumber.trim()) {
+      setFormError("Preencha fornecedor e NFe.");
+      return;
+    }
+    if (lines.length === 0) {
+      setFormError("Adicione ao menos um item à nota.");
       return;
     }
     setSaving(true);
     setFormError("");
     try {
-      const material = matOf(form.materialId);
-      const newBrand = form.brand.trim();
-      if (newBrand !== (material?.brand || "")) {
-        await apiFetch(`/materials/${form.materialId}`, { method: "PATCH", body: JSON.stringify({ brand: newBrand || null }) });
+      // Marca é do material: atualiza uma vez por material cuja marca mudou.
+      const brandByMaterial = new Map();
+      for (const l of lines) {
+        if (l.brand.trim() !== l.origBrand) brandByMaterial.set(l.materialId, l.brand.trim());
       }
-      // Entradas com mais de um item (só via API) preservam os demais itens ao editar o primeiro.
-      const otherItems = (editing?.items || []).slice(1).map((it) => ({
-        materialId: it.materialId,
-        lotNumber: it.lotNumber,
-        expiresAt: String(it.expiresAt).slice(0, 10),
-        quantity: Number(it.quantity),
-        unitCost: Number(it.unitCost),
-      }));
+      for (const [id, brand] of brandByMaterial) {
+        await apiFetch(`/materials/${id}`, { method: "PATCH", body: JSON.stringify({ brand: brand || null }) });
+      }
       const body = JSON.stringify({
-        supplierId: form.supplierId,
-        invoiceNumber: form.invoiceNumber,
-        entryDate: form.entryDate,
-        receivingUnit: form.receivingUnit.trim() || DISTRIMEDICAL_UNIT,
-        items: [{
-          materialId: form.materialId,
-          lotNumber: form.lotNumber,
-          expiresAt: form.expiresAt,
-          quantity: Number(form.quantity),
-          unitCost: Number(form.unitCost),
-        }, ...otherItems],
+        supplierId: header.supplierId,
+        invoiceNumber: header.invoiceNumber.trim(),
+        entryDate: header.entryDate,
+        receivingUnit: header.receivingUnit.trim() || DISTRIMEDICAL_UNIT,
+        items: lines.map((l) => ({
+          materialId: l.materialId,
+          lotNumber: l.lotNumber,
+          expiresAt: l.expiresAt,
+          quantity: l.quantity,
+          unitCost: l.unitCost,
+        })),
       });
       if (editing) {
         await apiFetch(`/stock/entries/${editing.id}`, { method: "PATCH", body });
@@ -133,10 +184,6 @@ export default function EntradaTab() {
     }
   };
 
-  const entryMaterial = editing?.items?.[0]?.material;
-  const materialOptions = entryMaterial && !materials.some((m) => m.id === entryMaterial.id) ? [entryMaterial, ...materials] : materials;
-  const matOf = (id) => materialOptions.find((m) => m.id === id);
-
   return (
     <div>
       <PageHeader
@@ -151,13 +198,39 @@ export default function EntradaTab() {
         </span>
       </div>
 
+      <div className="px-4 sm:px-8 mb-4">
+        <div className="card p-3 flex flex-wrap items-end gap-3">
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--muted)" }}>Período — início</label>
+            <input type="date" value={filters.dateFrom} max={filters.dateTo || undefined} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--muted)" }}>Período — fim</label>
+            <input type="date" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} />
+          </div>
+          <div className="min-w-[14rem]">
+            <label className="block text-xs font-semibold mb-1" style={{ color: "var(--muted)" }}>Fornecedor</label>
+            <select value={filters.supplierId} onChange={(e) => setFilters({ ...filters, supplierId: e.target.value })}>
+              <option value="">Todos os fornecedores</option>
+              {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          {hasFilters && (
+            <button onClick={() => setFilters({ dateFrom: "", dateTo: "", supplierId: "" })} className="text-sm font-semibold px-3 py-2 rounded-lg hover:bg-black/5" style={{ color: "var(--primary-dark)" }}>
+              Limpar filtros
+            </button>
+          )}
+          {!loading && <span className="text-xs ml-auto" style={{ color: "var(--muted)" }}>{entries.length} entrada(s)</span>}
+        </div>
+      </div>
+
       <div className="px-4 sm:px-8 pb-8">
         <div className="card overflow-hidden">
           {error && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{error}</div>}
           {listNotice && <div className="p-4 text-sm" style={{ color: "var(--danger)" }}>{listNotice}</div>}
           {loading ? (
             <div className="p-6 text-sm" style={{ color: "var(--muted)" }}>Carregando entradas...</div>
-          ) : entries.length === 0 ? <EmptyState text="Nenhuma entrada registrada." /> : (
+          ) : entries.length === 0 ? <EmptyState text={hasFilters ? "Nenhuma entrada encontrada para os filtros selecionados." : "Nenhuma entrada registrada."} /> : (
             <div className="overflow-x-auto overflow-y-auto min-h-[28rem] max-h-[34rem]"><table className="w-full min-w-[640px]">
               <thead style={{ position: "sticky", top: 0, background: "var(--panel)" }}><tr><th>Data</th><th>Fornecedor</th><th>Unidade</th><th>NFe</th><th>Materiais</th><th>Marca</th><th>Valor total</th><th></th></tr></thead>
               <tbody>
@@ -187,61 +260,82 @@ export default function EntradaTab() {
       {open && (
         <Modal title={editing ? "Editar entrada de estoque" : "Nova entrada de estoque"} onClose={() => setOpen(false)} wide>
           {formError && <div className="text-sm mb-2" style={{ color: "var(--danger)" }}>{formError}</div>}
+          <div className="text-xs font-bold uppercase mb-1" style={{ color: "var(--muted)" }}>Dados da NFe</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Field label="Material">
-                <select value={form.materialId} onChange={(e) => selectMaterial(e.target.value)}>
-                  {materialOptions.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
-              </Field>
-              <Field label="Marca">
-                <input
-                  value={form.brand}
-                  onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                  placeholder="Marca não informada"
-                />
-              </Field>
-            </div>
             <Field label="Fornecedor">
-              <select value={form.supplierId} onChange={(e) => setForm({ ...form, supplierId: e.target.value })}>
+              <select value={header.supplierId} onChange={(e) => setHeader({ ...header, supplierId: e.target.value })}>
                 {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </Field>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Número da NFe de compra">
+              <input value={header.invoiceNumber} onChange={(e) => setHeader({ ...header, invoiceNumber: e.target.value })} placeholder="Ex: 000.123.456" />
+            </Field>
             <Field label="Unidade que recebeu">
-              <input list="receiving-units" value={form.receivingUnit} onChange={(e) => setForm({ ...form, receivingUnit: e.target.value })} placeholder={DISTRIMEDICAL_UNIT} />
+              <input list="receiving-units" value={header.receivingUnit} onChange={(e) => setHeader({ ...header, receivingUnit: e.target.value })} placeholder={DISTRIMEDICAL_UNIT} />
               <datalist id="receiving-units">
                 <option value={DISTRIMEDICAL_UNIT} />
                 {clients.map((c) => <option key={c.id} value={c.name} />)}
               </datalist>
             </Field>
             <Field label="Data da entrada">
-              <input type="date" value={form.entryDate} onChange={(e) => setForm({ ...form, entryDate: e.target.value })} />
+              <input type="date" value={header.entryDate} onChange={(e) => setHeader({ ...header, entryDate: e.target.value })} />
             </Field>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="Número do lote">
-              <input value={form.lotNumber} onChange={(e) => setForm({ ...form, lotNumber: e.target.value })} placeholder="Ex: L-2026-001" />
-            </Field>
-            <Field label="Validade">
-              <input type="date" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
-            </Field>
+
+          <div className="text-xs font-bold uppercase mt-3 mb-1" style={{ color: "var(--muted)" }}>Itens da nota ({lines.length})</div>
+          {lines.length > 0 && (
+            <div className="overflow-x-auto mb-3"><table className="w-full min-w-[520px]">
+              <thead><tr><th>Material</th><th>Lote</th><th>Validade</th><th>Qtd</th><th>Custo un.</th><th>Subtotal</th><th></th></tr></thead>
+              <tbody>
+                {lines.map((l, i) => (
+                  <tr key={i}>
+                    <td className="text-sm">{l.materialName}{l.brand ? <span style={{ color: "var(--muted)" }}> · {l.brand}</span> : null}</td>
+                    <td className="text-sm mono">{l.lotNumber}</td>
+                    <td className="text-sm">{brDate(l.expiresAt)}</td>
+                    <td className="text-sm mono">{l.quantity} {l.unit}</td>
+                    <td className="text-sm mono">{brl(l.unitCost)}</td>
+                    <td className="text-sm mono">{brl(l.quantity * l.unitCost)}</td>
+                    <td className="text-right whitespace-nowrap">
+                      <button onClick={() => editLine(i)} className="p-1.5 rounded hover:bg-black/5 mr-1" title="Editar item"><Edit3 size={14} /></button>
+                      <button onClick={() => removeLine(i)} className="p-1.5 rounded hover:bg-black/5" style={{ color: "var(--danger)" }} title="Remover item"><Trash2 size={14} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot><tr><td colSpan={5} className="text-sm text-right font-bold">Total da NFe</td><td className="text-sm mono font-bold">{brl(total)}</td><td></td></tr></tfoot>
+            </table></div>
+          )}
+
+          <div className="rounded-lg p-3" style={{ border: "1px dashed var(--border, #cbd5d1)" }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Material">
+                <select value={draft.materialId} onChange={(e) => selectMaterial(e.target.value)}>
+                  {materialOptions.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Marca">
+                <input value={draft.brand} onChange={(e) => setDraft({ ...draft, brand: e.target.value })} placeholder="Marca não informada" />
+              </Field>
+              <Field label="Número do lote">
+                <input value={draft.lotNumber} onChange={(e) => setDraft({ ...draft, lotNumber: e.target.value })} placeholder="Ex: L-2026-001" />
+              </Field>
+              <Field label="Validade">
+                <input type="date" value={draft.expiresAt} onChange={(e) => setDraft({ ...draft, expiresAt: e.target.value })} />
+              </Field>
+              <Field label={`Quantidade (${matOf(draft.materialId)?.unit || "un"})`}>
+                <input type="number" min="1" value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: e.target.value })} />
+              </Field>
+              <Field label={`Custo unitário (por ${matOf(draft.materialId)?.unit || "un"}, R$)`}>
+                <input type="number" min="0" step="0.01" value={draft.unitCost} onChange={(e) => setDraft({ ...draft, unitCost: e.target.value })} />
+              </Field>
+            </div>
+            <button onClick={addLine} type="button" className="rounded-lg px-4 py-2 text-sm font-semibold flex items-center gap-2 mt-1" style={{ border: "1px solid var(--primary)", color: "var(--primary-dark)" }}>
+              <Plus size={14} />Adicionar item
+            </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label={`Quantidade (${matOf(form.materialId)?.unit || "un"})`}>
-              <input type="number" min="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
-            </Field>
-            <Field label={`Custo unitário (por ${matOf(form.materialId)?.unit || "un"}, R$)`}>
-              <input type="number" min="0" step="0.01" value={form.unitCost} onChange={(e) => setForm({ ...form, unitCost: e.target.value })} />
-            </Field>
-          </div>
-          <Field label="Número da NFe de compra">
-            <input value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} placeholder="Ex: 000.123.456" />
-          </Field>
-          <button onClick={save} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-2">
-            {saving ? "Salvando..." : editing ? "Salvar alterações" : "Registrar entrada"}
+
+          <button onClick={save} disabled={saving} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold w-full mt-3">
+            {saving ? "Salvando..." : editing ? `Salvar alterações (${lines.length} ${lines.length === 1 ? "item" : "itens"})` : `Registrar entrada (${lines.length} ${lines.length === 1 ? "item" : "itens"})`}
           </button>
         </Modal>
       )}
