@@ -48,6 +48,9 @@ export default function SaidaTab() {
   const { items: materials } = useCollection("/materials?pageSize=200&active=true");
   const { items: clients } = useCollection("/clients?pageSize=200&active=true");
   const { items: currentStock, reload: reloadStock } = useCollection("/stock/current?pageSize=200");
+  // Filtro da listagem inclui unidades inativas, pois ainda têm vendas no histórico.
+  const { items: allClients } = useCollection("/clients?pageSize=200");
+  const [clientFilter, setClientFilter] = useState("");
 
   // ---------- Listagem de saídas: filtro por período + paginação ----------
   // Trocado de useCollection() simples para um fetch próprio porque aqui
@@ -73,6 +76,7 @@ export default function SaidaTab() {
     const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
     if (dateFrom) params.set("dateFrom", dateFrom);
     if (dateTo) params.set("dateTo", dateTo);
+    if (clientFilter) params.set("clientId", clientFilter);
     apiFetch(`/sales?${params.toString()}`)
       .then((data) => {
         if (cancelled) return;
@@ -88,12 +92,12 @@ export default function SaidaTab() {
     return () => {
       cancelled = true;
     };
-  }, [dateFrom, dateTo, page, salesReloadTick]);
+  }, [dateFrom, dateTo, clientFilter, page, salesReloadTick]);
 
-  // Volta pra primeira página sempre que o período de busca muda.
+  // Volta pra primeira página sempre que o período ou a unidade mudam.
   useEffect(() => {
     setPage(1);
-  }, [dateFrom, dateTo]);
+  }, [dateFrom, dateTo, clientFilter]);
 
   const totalPages = Math.max(1, Math.ceil(salesTotal / PAGE_SIZE));
 
@@ -103,6 +107,7 @@ export default function SaidaTab() {
       const params = new URLSearchParams();
       if (dateFrom) params.set("dateFrom", dateFrom);
       if (dateTo) params.set("dateTo", dateTo);
+      if (clientFilter) params.set("clientId", clientFilter);
       const blob = await apiFetchBlob(`/sales/report?${params.toString()}`);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -232,6 +237,17 @@ export default function SaidaTab() {
           <Field label="Até">
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
           </Field>
+          <Field label="Unidade / Cliente">
+            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
+              <option value="">Todas as unidades</option>
+              {allClients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </Field>
+          {clientFilter && (
+            <button onClick={() => setClientFilter("")} className="text-sm font-semibold px-3 py-2 rounded-lg hover:bg-black/5 mb-3" style={{ color: "var(--primary-dark)" }}>
+              Limpar unidade
+            </button>
+          )}
           <button
             onClick={downloadReport}
             disabled={reportLoading}
